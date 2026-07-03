@@ -530,3 +530,80 @@ input[type="file"] {
   border: 1px solid #e5e9f2;
   background: #eef3ff;
 }
+
+/* Auth Tabs */
+.auth-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e9f2;
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-weight: 700;
+  color: #8c9ba5;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+}
+
+.auth-tab:hover {
+  color: #2454d6;
+}
+
+.auth-tab.active {
+  color: #2454d6;
+  border-bottom: 2px solid #2454d6;
+}
+
+/* Role Selector */
+.role-selector {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.role-btn {
+  flex: 1;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.role-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.role-btn.active {
+  background: #eef3ff;
+  border-color: #2454d6;
+  color: #2454d6;
+}
+
+/* Success Message */
+.success-message {
+  padding: 14px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  border-radius: 12px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}

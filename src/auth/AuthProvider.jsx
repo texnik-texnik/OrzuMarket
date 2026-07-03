@@ -142,6 +142,44 @@ export function AuthProvider({ children }) {
     return { user: data.user, profile: nextProfile };
   };
 
+  const signUp = useCallback(async ({ email, password, fullName, role = 'buyer' }) => {
+    if (!isSupabaseConfigured) {
+      const demoAuth = {
+        session: { user: { id: `demo-${role}-${Date.now()}`, email } },
+        profile: {
+          id: `demo-${role}-${Date.now()}`,
+          email,
+          full_name: fullName || `Demo ${role}`,
+          role,
+          is_blocked: false,
+        },
+      };
+      localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(demoAuth));
+      setSession(demoAuth.session);
+      setProfile(demoAuth.profile);
+      return { user: demoAuth.session.user, profile: demoAuth.profile };
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: role,
+        },
+      },
+    });
+
+    if (error) throw error;
+
+    let nextProfile = null;
+    if (data.session?.user?.id) {
+      nextProfile = await loadProfile(data.session.user.id);
+    }
+    return { user: data.user, session: data.session, profile: nextProfile };
+  }, [loadProfile]);
+
   const signOut = async () => {
     if (!isSupabaseConfigured) {
       localStorage.removeItem(DEMO_AUTH_KEY);
@@ -165,9 +203,10 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(session?.user),
     isDemoMode: !isSupabaseConfigured,
     signInWithPassword,
+    signUp,
     signOut,
     refreshProfile: () => loadProfile(session?.user?.id),
-  }), [session, profile, loading, profileLoading, loadProfile]);
+  }), [session, profile, loading, profileLoading, loadProfile, signUp]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
