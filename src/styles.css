@@ -1413,3 +1413,110 @@ tr:hover td {
   to { opacity: 1; }
 }
 
+/* Skeleton Shimmer Animation */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--border-color) 25%,
+    rgba(226, 232, 240, 0.6) 50%,
+    var(--border-color) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+[data-theme='dark'] .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 50%,
+    #1e293b 75%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton product card structure */
+.skeleton-card {
+  pointer-events: none;
+  border-color: var(--border-color);
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.skeleton-title {
+  height: 18px;
+  width: 60%;
+  border-radius: 4px;
+}
+
+.skeleton-price {
+  height: 18px;
+  width: 25%;
+  border-radius: 4px;
+}
+
+.skeleton-desc {
+  height: 14px;
+  width: 90%;
+  margin-top: 8px;
+  border-radius: 4px;
+}
+
+.skeleton-desc.short {
+  width: 50%;
+  margin-top: 6px;
+}
+
+.skeleton-meta {
+  height: 14px;
+  width: 40%;
+  margin-top: 12px;
+  border-radius: 4px;
+}
+
+.skeleton-button {
+  height: 38px;
+  width: 100%;
+  margin-top: 16px;
+  border-radius: var(--radius-sm);
+}
+
+/* Skeleton Table Rows */
+.skeleton-table-row td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-td-pill {
+  height: 16px;
+  border-radius: 4px;
+  width: 80%;
+}
+
+.skeleton-td-pill.img {
+  width: 45px;
+  height: 35px;
+  border-radius: 4px;
+}
+
+.skeleton-td-pill.btn {
+  width: 80px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+

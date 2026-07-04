@@ -4,6 +4,7 @@ import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
 import { createSellerProduct, fetchSellerProducts } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
+import { TableRowSkeleton } from '../../components/SkeletonLoaders';
 
 const initialForm = { name: '', price: '', description: '', photoFile: null, stock: 1 };
 
@@ -91,11 +92,10 @@ export function SellerProductsPage() {
       </div>
 
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">{t('loadingProducts')}</p>}
 
       {!loading && !products.length && <p className="muted">{t('noProductsYet')}</p>}
 
-      {!!products.length && (
+      {(loading || !!products.length) && (
         <div className="table-wrap">
           <table>
             <thead>
@@ -109,16 +109,22 @@ export function SellerProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
-                  <td>{product.name}</td>
-                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
-                  <td>{product.stock}</td>
-                  <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
-                  <td>{product.description || '—'}</td>
-                </tr>
-              ))}
+              {loading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRowSkeleton key={idx} columns={6} />
+                ))
+              ) : (
+                products.map((product) => (
+                  <tr key={product.id}>
+                    <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
+                    <td>{product.name}</td>
+                    <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
+                    <td>{product.stock}</td>
+                    <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
+                    <td>{product.description || '—'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
