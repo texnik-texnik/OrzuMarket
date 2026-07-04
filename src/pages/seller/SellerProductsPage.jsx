@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
 import { createSellerProduct, fetchSellerProducts } from '../../services/marketplace';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 const initialForm = { name: '', price: '', description: '', photoFile: null, stock: 1 };
 
@@ -14,6 +15,7 @@ export function SellerProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const { t, lang } = useTranslation();
 
   const photoPreview = useMemo(() => {
     if (!form.photoFile) return '';
@@ -26,7 +28,7 @@ export function SellerProductsPage() {
     try {
       setProducts(await fetchSellerProducts(user.id));
     } catch (err) {
-      setError(err.message ?? 'Не удалось загрузить товары');
+      setError(err.message ?? t('errorLoadProducts'));
     } finally {
       setLoading(false);
     }
@@ -45,13 +47,13 @@ export function SellerProductsPage() {
     const file = event.target.files?.[0] ?? null;
 
     if (file && !file.type.startsWith('image/')) {
-      setError('Можно загрузить только изображение.');
+      setError(t('errorImageOnly'));
       event.target.value = '';
       return;
     }
 
     if (file && file.size > 5 * 1024 * 1024) {
-      setError('Фото слишком большое. Максимум 5 MB.');
+      setError(t('errorImageSize'));
       event.target.value = '';
       return;
     }
@@ -75,7 +77,7 @@ export function SellerProductsPage() {
       setProducts((current) => [product, ...current]);
       closeModal();
     } catch (err) {
-      setError(err.message ?? 'Не удалось создать товар');
+      setError(err.message ?? t('errorCreateProduct'));
     } finally {
       setSubmitting(false);
     }
@@ -84,26 +86,26 @@ export function SellerProductsPage() {
   return (
     <div>
       <div className="section-head">
-        <h2>Мои товары</h2>
-        <button type="button" onClick={() => setModalOpen(true)}>Добавить товар</button>
+        <h2>{t('sellerProductsTitle')}</h2>
+        <button type="button" onClick={() => setModalOpen(true)}>{t('addBtn')}</button>
       </div>
 
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Загружаем товары...</p>}
+      {loading && <p className="muted">{t('loadingProducts')}</p>}
 
-      {!loading && !products.length && <p className="muted">Вы ещё не добавили товары.</p>}
+      {!loading && !products.length && <p className="muted">{t('noProductsYet')}</p>}
 
       {!!products.length && (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Фото</th>
-                <th>Название</th>
-                <th>Цена</th>
-                <th>Остаток</th>
-                <th>Статус</th>
-                <th>Описание</th>
+                <th>{t('tableHeaderPhoto')}</th>
+                <th>{t('tableHeaderTitle')}</th>
+                <th>{t('tableHeaderPrice')}</th>
+                <th>{t('tableHeaderStock')}</th>
+                <th>{t('tableHeaderStatus')}</th>
+                <th>{t('tableHeaderDescription')}</th>
               </tr>
             </thead>
             <tbody>
@@ -111,9 +113,9 @@ export function SellerProductsPage() {
                 <tr key={product.id}>
                   <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                   <td>{product.name}</td>
-                  <td>{Number(product.price).toLocaleString('ru-RU')} ₽</td>
+                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</td>
                   <td>{product.stock}</td>
-                  <td>{product.is_active ? 'Активен' : 'Скрыт'}</td>
+                  <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
                   <td>{product.description || '—'}</td>
                 </tr>
               ))}
@@ -123,37 +125,37 @@ export function SellerProductsPage() {
       )}
 
       {modalOpen && (
-        <Modal title="Добавить товар" onClose={closeModal}>
+        <Modal title={t('addProductModalTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit}>
             <label>
-              Название
+              {t('fieldName')}
               <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} required />
             </label>
             <label>
-              Цена
+              {t('fieldPrice')}
               <input type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm((value) => ({ ...value, price: event.target.value }))} required />
             </label>
             <label>
-              Остаток
+              {t('fieldStock')}
               <input type="number" min="0" value={form.stock} onChange={(event) => setForm((value) => ({ ...value, stock: event.target.value }))} required />
             </label>
             <label>
-              Описание
+              {t('fieldDescription')}
               <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} />
             </label>
             <label>
-              Фото товара
+              {t('fieldPhoto')}
               <input type="file" accept="image/*" onChange={handlePhotoChange} />
             </label>
 
             {photoPreview && (
               <div className="photo-preview">
-                <span>Предпросмотр</span>
-                <img src={photoPreview} alt="Предпросмотр товара" />
+                <span>{t('photoPreviewLabel')}</span>
+                <img src={photoPreview} alt={t('photoPreviewAlt')} />
               </div>
             )}
 
-            <button type="submit" disabled={submitting}>{submitting ? 'Загружаем...' : 'Создать'}</button>
+            <button type="submit" disabled={submitting}>{submitting ? t('creatingBtn') : t('createBtn')}</button>
           </form>
         </Modal>
       )}

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useCart } from '../../cart/CartProvider';
 import { fetchActiveProducts } from '../../services/marketplace';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function ShopPage() {
   const { addItem, totalQuantity } = useCart();
@@ -11,6 +12,7 @@ export function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addedId, setAddedId] = useState(null);
+  const { t, lang } = useTranslation();
 
   const loadProducts = async () => {
     setLoading(true);
@@ -18,7 +20,7 @@ export function ShopPage() {
     try {
       setProducts(await fetchActiveProducts(filters));
     } catch (err) {
-      setError(err.message ?? 'Не удалось загрузить товары');
+      setError(err.message ?? t('errorLoadProducts'));
     } finally {
       setLoading(false);
     }
@@ -42,30 +44,30 @@ export function ShopPage() {
     <section>
       <div className="page-head">
         <div>
-          <h1>Маркетплейс</h1>
-          <p>Выбирайте товары, добавляйте в корзину и оформляйте заказ.</p>
+          <h1>{t('marketplaceTitle')}</h1>
+          <p>{t('marketplaceSub')}</p>
         </div>
-        <Link className="button-link" to="/checkout">Корзина · {totalQuantity}</Link>
+        <Link className="button-link" to="/checkout">{t('cart')} · {totalQuantity}</Link>
       </div>
 
       <div className="card filters-card">
         <input
           type="search"
-          placeholder="Поиск по названию"
+          placeholder={t('searchPlaceholder')}
           value={filters.search}
           onChange={(event) => setFilters((value) => ({ ...value, search: event.target.value }))}
         />
         <input
           type="number"
           min="0"
-          placeholder="Цена от"
+          placeholder={t('priceFromPlaceholder')}
           value={filters.minPrice}
           onChange={(event) => setFilters((value) => ({ ...value, minPrice: event.target.value }))}
         />
         <input
           type="number"
           min="0"
-          placeholder="Цена до"
+          placeholder={t('priceToPlaceholder')}
           value={filters.maxPrice}
           onChange={(event) => setFilters((value) => ({ ...value, maxPrice: event.target.value }))}
         />
@@ -73,23 +75,23 @@ export function ShopPage() {
           value={filters.sort}
           onChange={(event) => setFilters((value) => ({ ...value, sort: event.target.value }))}
         >
-          <option value="created_at.desc">Сначала новые</option>
-          <option value="price.asc">Сначала дешёвые</option>
-          <option value="price.desc">Сначала дорогие</option>
-          <option value="name.asc">По названию</option>
+          <option value="created_at.desc">{t('sortNewest')}</option>
+          <option value="price.asc">{t('sortCheapest')}</option>
+          <option value="price.desc">{t('sortExpensive')}</option>
+          <option value="name.asc">{t('sortByName')}</option>
         </select>
         {hasFilters && (
           <button type="button" className="secondary" onClick={() => setFilters({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc' })}>
-            Сбросить
+            {t('resetFilters')}
           </button>
         )}
       </div>
 
       {error && <p className="error">{error}</p>}
-      {loading && <div className="screen-center compact">Загружаем товары...</div>}
+      {loading && <div className="screen-center compact">{t('loadingProducts')}</div>}
 
       {!loading && !products.length && (
-        <section className="card empty-state">Товаров по выбранным фильтрам не найдено.</section>
+        <section className="card empty-state">{t('noProductsFound')}</section>
       )}
 
       <div className="products-grid">
@@ -99,12 +101,12 @@ export function ShopPage() {
             <div className="product-body">
               <div className="product-title-row">
                 <h3>{product.name}</h3>
-                <strong>{Number(product.price).toLocaleString('ru-RU')} ₽</strong>
+                <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</strong>
               </div>
-              <p>{product.description || 'Описание пока не добавлено.'}</p>
-              <div className="muted">На складе: {product.stock}</div>
+              <p>{product.description || t('noDescription')}</p>
+              <div className="muted">{t('inStock')}: {product.stock}</div>
               <button type="button" disabled={product.stock < 1} onClick={() => handleAdd(product)}>
-                {addedId === product.id ? 'Добавлено ✓' : 'Добавить в корзину'}
+                {addedId === product.id ? t('addedSuccess') : t('addToCart')}
               </button>
             </div>
           </article>

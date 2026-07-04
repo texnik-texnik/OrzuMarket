@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
 import { useCart } from '../../cart/CartProvider';
 import { createOrdersFromCart } from '../../services/marketplace';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -11,12 +12,13 @@ export function CheckoutPage() {
   const { items, totalAmount, setQuantity, removeItem, clearCart } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { t, lang } = useTranslation();
 
   const handleCheckout = async () => {
     setError('');
 
     if (role !== 'buyer') {
-      setError('Оформление заказа разрешено только покупателям с role === buyer.');
+      setError(t('checkoutErrorRole'));
       return;
     }
 
@@ -26,7 +28,7 @@ export function CheckoutPage() {
       clearCart();
       navigate('/profile?tab=orders', { replace: true });
     } catch (err) {
-      setError(err.message ?? 'Не удалось оформить заказ');
+      setError(err.message ?? t('checkoutErrorFail'));
     } finally {
       setSubmitting(false);
     }
@@ -36,15 +38,15 @@ export function CheckoutPage() {
     <section>
       <div className="page-head">
         <div>
-          <h1>Оформление заказа</h1>
-          <p>Корзина хранится в localStorage. При оформлении создаётся заказ в Supabase.</p>
+          <h1>{t('checkoutTitle')}</h1>
+          <p>{t('checkoutNote')}</p>
         </div>
-        <Link className="button-link secondary-link" to="/shop">Вернуться в магазин</Link>
+        <Link className="button-link secondary-link" to="/shop">{t('backToShop')}</Link>
       </div>
 
       {!items.length ? (
         <section className="card empty-state">
-          Корзина пустая. <Link to="/shop">Перейти к товарам</Link>
+          {t('cartEmpty')} <Link to="/shop">{t('goToProducts')}</Link>
         </section>
       ) : (
         <section className="card">
@@ -54,7 +56,9 @@ export function CheckoutPage() {
                 <ProductImageWithFallback src={item.photo_url} alt={item.name} />
                 <div>
                   <h3>{item.name}</h3>
-                  <p className="muted">{Number(item.price).toLocaleString('ru-RU')} ₽ · stock: {item.stock}</p>
+                  <p className="muted">
+                    {Number(item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'} · stock: {item.stock}
+                  </p>
                 </div>
                 <input
                   className="quantity-input"
@@ -64,16 +68,18 @@ export function CheckoutPage() {
                   value={item.quantity}
                   onChange={(event) => setQuantity(item.id, event.target.value)}
                 />
-                <strong>{(item.quantity * item.price).toLocaleString('ru-RU')} ₽</strong>
-                <button type="button" className="danger" onClick={() => removeItem(item.id)}>Удалить</button>
+                <strong>
+                  {(item.quantity * item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}
+                </strong>
+                <button type="button" className="danger" onClick={() => removeItem(item.id)}>{t('deleteBtn')}</button>
               </div>
             ))}
           </div>
 
           <div className="checkout-footer">
-            <strong>Итого: {totalAmount.toLocaleString('ru-RU')} ₽</strong>
+            <strong>{t('totalAmount')}: {totalAmount.toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</strong>
             <button type="button" onClick={handleCheckout} disabled={submitting || !items.length}>
-              {submitting ? 'Оформляем...' : 'Оформить заказ'}
+              {submitting ? t('placingOrder') : t('placeOrder')}
             </button>
           </div>
           {error && <p className="error">{error}</p>}

@@ -1,15 +1,19 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function SellerOverviewPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="stats-grid">
       <Link className="stat-card" to="/dashboard/products">
-        <strong>Товары</strong>
-        <span>Добавить товар и посмотреть список своих товаров.</span>
+        <strong>{t('sellerOverviewProductsTitle')}</strong>
+        <span>{t('sellerOverviewProductsSub')}</span>
       </Link>
       <Link className="stat-card" to="/dashboard/orders">
-        <strong>Заказы</strong>
-        <span>Список заказов, где фигурируют ваши товары.</span>
+        <strong>{t('sellerOverviewOrdersTitle')}</strong>
+        <span>{t('sellerOverviewOrdersSub')}</span>
       </Link>
     </div>
   );

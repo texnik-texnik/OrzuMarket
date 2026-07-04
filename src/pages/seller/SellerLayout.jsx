@@ -1,14 +1,18 @@
+import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function SellerLayout() {
+  const { t } = useTranslation();
+
   return (
     <section className="card">
-      <h1>Seller Dashboard</h1>
-      <p>Доступ только для <code>role === 'seller'</code>.</p>
+      <h1>{t('sellerOverviewTitle')}</h1>
+      <p>{t('sellerAccessOnly')}</p>
       <div className="subnav">
-        <Link to="/dashboard">Overview</Link>
-        <Link to="/dashboard/products">My Products</Link>
-        <Link to="/dashboard/orders">Orders</Link>
+        <Link to="/dashboard">{t('adminOverview')}</Link>
+        <Link to="/dashboard/products">{t('sellerOverviewProductsTitle')}</Link>
+        <Link to="/dashboard/orders">{t('sellerOverviewOrdersTitle')}</Link>
       </div>
       <Outlet />
     </section>

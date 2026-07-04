@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../auth/AuthProvider';
 import { fetchAdminUsers, updateUserBlocked, updateUserRole } from '../../services/marketplace';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function AdminUsersPage() {
   const { user } = useAuth();
@@ -8,6 +9,7 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  const { t } = useTranslation();
 
   const loadUsers = async () => {
     setLoading(true);
@@ -15,7 +17,7 @@ export function AdminUsersPage() {
     try {
       setUsers(await fetchAdminUsers());
     } catch (err) {
-      setError(err.message ?? 'Не удалось загрузить пользователей');
+      setError(err.message ?? t('errorLoadUsers'));
     } finally {
       setLoading(false);
     }
@@ -23,6 +25,7 @@ export function AdminUsersPage() {
 
   useEffect(() => {
     loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const patchUser = (userId, patch) => {
@@ -37,7 +40,7 @@ export function AdminUsersPage() {
       await updateUserRole(target.id, nextRole);
       patchUser(target.id, { role: nextRole });
     } catch (err) {
-      setError(err.message ?? 'Не удалось изменить роль');
+      setError(err.message ?? t('errorChangeRole'));
     } finally {
       setUpdatingId(null);
     }
@@ -51,7 +54,7 @@ export function AdminUsersPage() {
       await updateUserBlocked(target.id, nextValue);
       patchUser(target.id, { is_blocked: nextValue });
     } catch (err) {
-      setError(err.message ?? 'Не удалось изменить блокировку');
+      setError(err.message ?? t('errorChangeBlocked'));
     } finally {
       setUpdatingId(null);
     }
@@ -60,23 +63,23 @@ export function AdminUsersPage() {
   return (
     <div>
       <div className="section-head">
-        <h2>Пользователи</h2>
-        <button type="button" className="secondary" onClick={loadUsers}>Обновить</button>
+        <h2>{t('adminUsersTitle')}</h2>
+        <button type="button" className="secondary" onClick={loadUsers}>{t('refreshBtn')}</button>
       </div>
 
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Загружаем пользователей...</p>}
+      {loading && <p className="muted">{t('loading')}</p>}
 
       {!!users.length && (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Email</th>
-                <th>Имя</th>
-                <th>Role</th>
-                <th>Сделать продавцом</th>
-                <th>Заблокировать</th>
+                <th>{t('tableHeaderEmail')}</th>
+                <th>{t('tableHeaderName')}</th>
+                <th>{t('tableHeaderRole')}</th>
+                <th>{t('tableHeaderMakeSeller')}</th>
+                <th>{t('tableHeaderBlock')}</th>
               </tr>
             </thead>
             <tbody>
@@ -95,7 +98,7 @@ export function AdminUsersPage() {
                           disabled={target.role === 'admin' || updatingId === target.id}
                           onChange={() => toggleSeller(target)}
                         />
-                        <span>{target.role === 'seller' ? 'Seller' : 'Buyer'}</span>
+                        <span>{target.role === 'seller' ? t('makeSellerCheck') : t('makeBuyerCheck')}</span>
                       </label>
                     </td>
                     <td>
@@ -106,7 +109,7 @@ export function AdminUsersPage() {
                           disabled={isSelf || target.role === 'admin' || updatingId === target.id}
                           onChange={() => toggleBlocked(target)}
                         />
-                        <span>{target.is_blocked ? 'Заблокирован' : 'Активен'}</span>
+                        <span>{target.is_blocked ? t('blockedCheck') : t('activeCheck')}</span>
                       </label>
                     </td>
                   </tr>

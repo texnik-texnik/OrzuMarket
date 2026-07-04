@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { deleteProduct, fetchAdminProducts, setProductActive } from '../../services/marketplace';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function AdminProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  const { t, lang } = useTranslation();
 
   const loadProducts = async () => {
     setLoading(true);
@@ -14,7 +16,7 @@ export function AdminProductsPage() {
     try {
       setProducts(await fetchAdminProducts());
     } catch (err) {
-      setError(err.message ?? 'Не удалось загрузить товары');
+      setError(err.message ?? t('errorLoadProducts'));
     } finally {
       setLoading(false);
     }
@@ -22,6 +24,7 @@ export function AdminProductsPage() {
 
   useEffect(() => {
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const patchProduct = (productId, patch) => {
@@ -35,14 +38,14 @@ export function AdminProductsPage() {
       await setProductActive(product.id, !product.is_active);
       patchProduct(product.id, { is_active: !product.is_active });
     } catch (err) {
-      setError(err.message ?? 'Не удалось обновить товар');
+      setError(err.message ?? t('errorUpdateProduct'));
     } finally {
       setUpdatingId(null);
     }
   };
 
   const handleDelete = async (product) => {
-    const ok = window.confirm(`Удалить товар «${product.name}»? Если по нему есть заказы, Supabase может запретить удаление — тогда используйте «Скрыть».`);
+    const ok = window.confirm(t('deleteConfirm', { name: product.name }));
     if (!ok) return;
 
     setUpdatingId(product.id);
@@ -51,7 +54,7 @@ export function AdminProductsPage() {
       await deleteProduct(product.id);
       setProducts((current) => current.filter((item) => item.id !== product.id));
     } catch (err) {
-      setError(err.message ?? 'Не удалось удалить товар');
+      setError(err.message ?? t('errorDeleteProduct'));
     } finally {
       setUpdatingId(null);
     }
@@ -60,25 +63,25 @@ export function AdminProductsPage() {
   return (
     <div>
       <div className="section-head">
-        <h2>Модерация товаров</h2>
-        <button type="button" className="secondary" onClick={loadProducts}>Обновить</button>
+        <h2>{t('adminProductsTitle')}</h2>
+        <button type="button" className="secondary" onClick={loadProducts}>{t('refreshBtn')}</button>
       </div>
 
       {error && <p className="error">{error}</p>}
-      {loading && <p className="muted">Загружаем товары...</p>}
+      {loading && <p className="muted">{t('loadingProducts')}</p>}
 
       {!!products.length && (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Фото</th>
-                <th>Название</th>
-                <th>Продавец</th>
-                <th>Цена</th>
-                <th>Остаток</th>
-                <th>Статус</th>
-                <th>Модерация</th>
+                <th>{t('tableHeaderPhoto')}</th>
+                <th>{t('tableHeaderTitle')}</th>
+                <th>{t('tableHeaderSeller')}</th>
+                <th>{t('tableHeaderPrice')}</th>
+                <th>{t('tableHeaderStock')}</th>
+                <th>{t('tableHeaderStatus')}</th>
+                <th>{t('tableHeaderAction')}</th>
               </tr>
             </thead>
             <tbody>
@@ -87,15 +90,15 @@ export function AdminProductsPage() {
                   <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                   <td>{product.name}</td>
                   <td>{product.seller?.email ?? product.seller_id}</td>
-                  <td>{Number(product.price).toLocaleString('ru-RU')} ₽</td>
+                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</td>
                   <td>{product.stock}</td>
-                  <td>{product.is_active ? 'Активен' : 'Скрыт'}</td>
+                  <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
                   <td className="actions-cell">
                     <button type="button" className="secondary" disabled={updatingId === product.id} onClick={() => toggleActive(product)}>
-                      {product.is_active ? 'Скрыть' : 'Показать'}
+                      {product.is_active ? t('actionHide') : t('actionShow')}
                     </button>
                     <button type="button" className="danger" disabled={updatingId === product.id} onClick={() => handleDelete(product)}>
-                      Удалить
+                      {t('deleteBtn')}
                     </button>
                   </td>
                 </tr>

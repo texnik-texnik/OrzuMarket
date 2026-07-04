@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { CartProvider } from './cart/CartProvider';
+import { LanguageProvider } from './localization/LanguageProvider';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppLayout } from './pages/common/AppLayout';
 import { HomePage } from './pages/common/HomePage';
@@ -21,10 +22,11 @@ import { SellerOrdersPage } from './pages/seller/SellerOrdersPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <CartProvider>
-        <Routes>
+    <LanguageProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <CartProvider>
+          <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
@@ -58,8 +60,9 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
-        </CartProvider>
-      </AuthProvider>
-    </BrowserRouter>
+          </CartProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }

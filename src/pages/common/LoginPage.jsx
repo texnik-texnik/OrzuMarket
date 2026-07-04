@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { getDefaultPathByRole } from '../../routes/roleRedirect';
+import { useTranslation } from '../../localization/LanguageProvider';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, role, profile, loading, isDemoMode, signInWithPassword, signUp } = useAuth();
+  const { t } = useTranslation();
 
   const [isRegister, setIsRegister] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -17,7 +19,7 @@ export function LoginPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading) return <div className="screen-center">Загрузка...</div>;
+  if (loading) return <div className="screen-center">{t('loading')}</div>;
 
   if (isAuthenticated) {
     return <Navigate to={profile?.is_blocked ? '/blocked' : getDefaultPathByRole(role)} replace />;
@@ -39,9 +41,7 @@ export function LoginPage() {
         });
 
         if (!session && !isDemoMode) {
-          setSuccessMessage(
-            'Регистрация успешна! Мы отправили письмо с подтверждением на ваш email. Пожалуйста, перейдите по ссылке в письме перед входом.'
-          );
+          setSuccessMessage(t('registrationSuccess'));
           setFullName('');
           setEmail('');
           setPassword('');
@@ -58,7 +58,7 @@ export function LoginPage() {
         navigate(target || defaultTarget, { replace: true });
       }
     } catch (err) {
-      setError(err.message ?? 'Произошла ошибка');
+      setError(err.message ?? t('error'));
     } finally {
       setSubmitting(false);
     }
@@ -80,7 +80,7 @@ export function LoginPage() {
             setSuccessMessage('');
           }}
         >
-          Вход
+          {t('authTabsLogin')}
         </button>
         <button
           type="button"
@@ -91,24 +91,24 @@ export function LoginPage() {
             setSuccessMessage('');
           }}
         >
-          Регистрация
+          {t('authTabsRegister')}
         </button>
       </div>
 
-      <h1>{isRegister ? 'Регистрация в Orzu' : 'Вход в Orzu'}</h1>
+      <h1>{isRegister ? t('registerTitle') : t('loginTitle')}</h1>
       
-      {!isRegister && <p>После входа роль берётся из таблицы <code>profiles</code>.</p>}
+      {!isRegister && <p>{t('authDemoNote')}</p>}
 
       {successMessage && <div className="success-message">{successMessage}</div>}
 
       {isDemoMode && (
         <div className="demo-box">
-          <strong>Demo mode (Supabase не настроен)</strong>
+          <strong>{t('demoModeTitle')}</strong>
           {isRegister ? (
-            <span>В демонстрационном режиме вы можете создать любой аккаунт, и вход выполнится автоматически.</span>
+            <span>{t('demoModeRegNote')}</span>
           ) : (
             <>
-              <span>Войдите тестовыми аккаунтами (пароль — любой):</span>
+              <span>{t('demoModeLoginNote')}</span>
               <div className="demo-buttons">
                 <button type="button" className="secondary" onClick={() => { setEmail('buyer@demo.test'); setPassword('demo'); }}>Buyer</button>
                 <button type="button" className="secondary" onClick={() => { setEmail('seller@demo.test'); setPassword('demo'); }}>Seller</button>
@@ -122,36 +122,36 @@ export function LoginPage() {
       <form onSubmit={handleSubmit}>
         {isRegister && (
           <label>
-            Имя и фамилия
+            {t('fullNameLabel')}
             <input
               type="text"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              placeholder="Иван Иванов"
+              placeholder={t('fullNamePlaceholder')}
               required
             />
           </label>
         )}
 
         <label>
-          Email
+          {t('emailLabel')}
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder={isRegister ? "user@example.com" : "seller@example.com"}
+            placeholder={isRegister ? t('emailPlaceholderRegister') : t('emailPlaceholderLogin')}
             autoComplete="email"
             required
           />
         </label>
 
         <label>
-          Password
+          {t('passwordLabel')}
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
+            placeholder={t('passwordPlaceholder')}
             autoComplete={isRegister ? "new-password" : "current-password"}
             required
           />
@@ -159,8 +159,8 @@ export function LoginPage() {
 
         {isRegister && (
           <div>
-            <span style={{ display: 'block', marginBottom: '6px', color: '#30446f', fontWeight: 600 }}>
-              Тип аккаунта
+            <span style={{ display: 'block', marginBottom: '6px', color: 'var(--text-primary)', fontWeight: 600 }}>
+              {t('accountTypeLabel')}
             </span>
             <div className="role-selector">
               <button
@@ -168,14 +168,14 @@ export function LoginPage() {
                 className={`role-btn ${roleSelection === 'buyer' ? 'active' : ''}`}
                 onClick={() => setRoleSelection('buyer')}
               >
-                🛍️ Покупатель
+                {t('buyerRoleBtn')}
               </button>
               <button
                 type="button"
                 className={`role-btn ${roleSelection === 'seller' ? 'active' : ''}`}
                 onClick={() => setRoleSelection('seller')}
               >
-                💼 Продавец
+                {t('sellerRoleBtn')}
               </button>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function LoginPage() {
         {error && <p className="error">{error}</p>}
 
         <button type="submit" disabled={submitting}>
-          {submitting ? (isRegister ? 'Регистрация...' : 'Входим...') : (isRegister ? 'Зарегистрироваться' : 'Войти')}
+          {submitting ? (isRegister ? t('registering') : t('loggingIn')) : (isRegister ? t('registerBtn') : t('loginBtn'))}
         </button>
       </form>
     </section>

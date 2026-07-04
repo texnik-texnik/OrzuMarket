@@ -1,11 +1,15 @@
+import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { useCart } from '../../cart/CartProvider';
+import { useTranslation } from '../../localization/LanguageProvider';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 export function AppLayout() {
   const navigate = useNavigate();
   const { isAuthenticated, profile, role, signOut } = useAuth();
   const { totalQuantity } = useCart();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await signOut();
@@ -20,23 +24,29 @@ export function AppLayout() {
           <span>Orzu</span>
         </Link>
         <nav>
+          <LanguageSelector />
           {isAuthenticated && (
             <>
-              {role === 'admin' && <Link to="/admin">Admin</Link>}
-              {role === 'seller' && <Link to="/dashboard">Seller Dashboard</Link>}
-              <Link to="/shop">Shop</Link>
-              <Link to="/checkout">Корзина ({totalQuantity})</Link>
-              <Link to="/profile">Profile</Link>
-              <button type="button" onClick={handleLogout}>Выйти</button>
+              {role === 'admin' && <Link to="/admin">{t('admin')}</Link>}
+              {role === 'seller' && <Link to="/dashboard">{t('sellerDashboard')}</Link>}
+              <Link to="/shop">{t('shop')}</Link>
+              <Link to="/checkout">{t('cart')} ({totalQuantity})</Link>
+              <Link to="/profile">{t('profile')}</Link>
+              <button type="button" onClick={handleLogout}>{t('logout')}</button>
             </>
           )}
-          {!isAuthenticated && <Link to="/login">Login</Link>}
+          {!isAuthenticated && <Link to="/login">{t('login')}</Link>}
         </nav>
       </header>
 
       {isAuthenticated && (
         <div className="role-strip">
-          Пользователь: {profile?.email ?? '—'} · role: <strong>{role ?? '—'}</strong>
+          <div>
+            {t('user')}: <strong>{profile?.email ?? '—'}</strong>
+          </div>
+          <div>
+            {t('role')}: <strong>{role ?? '—'}</strong>
+          </div>
         </div>
       )}
 
