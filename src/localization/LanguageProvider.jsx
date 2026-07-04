@@ -142,6 +142,20 @@ const translations = {
     errorDeleteProduct: 'Не удалось удалить товар',
     errorUpdateProduct: 'Не удалось обновить товар',
 
+    // Dashboard Statistics
+    statTotalIncome: 'Общий доход',
+    statTotalOrders: 'Количество заказов',
+    statAverageCheck: 'Средний чек',
+    statTotalProducts: 'Количество товаров',
+    statTotalUsers: 'Всего пользователей',
+    chartSalesDynamics: 'Динамика продаж (последние 7 дней)',
+    chartRevenue: 'Выручка',
+    chartOrders: 'Заказы',
+    chartDate: 'Дата',
+    chartNoData: 'Нет данных о продажах за этот период',
+    dashboardWelcome: 'Добро пожаловать, {name}!',
+    quickNavigation: 'Быстрый переход',
+
     // Seller Pages
     sellerOverviewTitle: 'Панель продавца',
     sellerAccessOnly: 'Доступ разрешен только продавцам.',
@@ -319,6 +333,20 @@ const translations = {
     deleteConfirm: 'Моли «{name}»-ро нест кунед? Агар нисбати он фармоишҳо бошанд, система метавонад несткуниро рад кунад — дар он сурат «Пинҳон кардан»-ро истифода баред.',
     errorDeleteProduct: 'Нест кардани мол ноком шуд',
     errorUpdateProduct: 'Навсозии мол ноком шуд',
+
+    // Dashboard Statistics
+    statTotalIncome: 'Даромади умумӣ',
+    statTotalOrders: 'Миқдори фармоишҳо',
+    statAverageCheck: 'Чеки миёна',
+    statTotalProducts: 'Миқдори молҳо',
+    statTotalUsers: 'Шумораи корбарон',
+    chartSalesDynamics: 'Динамикаи фурӯш (7 рӯзи охир)',
+    chartRevenue: 'Даромад',
+    chartOrders: 'Фармоишҳо',
+    chartDate: 'Сана',
+    chartNoData: 'Дар ин давра маълумот дар бораи фурӯш нест',
+    dashboardWelcome: 'Хуш омадед, {name}!',
+    quickNavigation: 'Гузариши зуд',
 
     // Seller Pages
     sellerOverviewTitle: 'Панели фурӯшанда',
