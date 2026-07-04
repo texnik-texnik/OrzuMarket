@@ -71,7 +71,7 @@ const translations = {
     totalAmount: 'Итого',
     placeOrder: 'Оформить заказ',
     placingOrder: 'Оформляем...',
-    checkoutErrorRole: 'Оформление заказа разрешено только покупателям с role === buyer.',
+    checkoutErrorRole: 'Оформление заказа разрешено только покупателям.',
     checkoutErrorFail: 'Не удалось оформить заказ',
 
     // ProfilePage
@@ -104,7 +104,7 @@ const translations = {
 
     // Admin Pages
     adminInterfaceTitle: 'Интерфейс администратора',
-    adminAccessOnly: 'Доступ только для нақша \'admin\'.',
+    adminAccessOnly: 'Доступ разрешен только администраторам.',
     adminOverview: 'Обзор',
     adminUsers: 'Пользователи',
     adminProducts: 'Товары',
@@ -144,7 +144,7 @@ const translations = {
 
     // Seller Pages
     sellerOverviewTitle: 'Панель продавца',
-    sellerAccessOnly: 'Доступ только для role === \'seller\'.',
+    sellerAccessOnly: 'Доступ разрешен только продавцам.',
     sellerOverviewProductsTitle: 'Товары',
     sellerOverviewProductsSub: 'Добавить товар и посмотреть список своих товаров.',
     sellerOverviewOrdersTitle: 'Заказы',
@@ -249,7 +249,7 @@ const translations = {
     totalAmount: 'Ҷамъ',
     placeOrder: 'Фармоиш додан',
     placingOrder: 'Барасмиятдарорӣ...',
-    checkoutErrorRole: 'Барасмиятдарории фармоиш танҳо барои харидорон бо нақши buyer иҷозат дода шудааст.',
+    checkoutErrorRole: 'Барасмиятдарории фармоиш танҳо барои харидорон иҷозат дода шудааст.',
     checkoutErrorFail: 'Барасмиятдарории фармоиш ноком шуд',
 
     // ProfilePage
@@ -282,7 +282,7 @@ const translations = {
 
     // Admin Pages
     adminInterfaceTitle: 'Интерфейси маъмур',
-    adminAccessOnly: 'Дастрасӣ танҳо барои нақши \'admin\'.',
+    adminAccessOnly: 'Дастрасӣ танҳо барои маъмурон.',
     adminOverview: 'Баррасӣ',
     adminUsers: 'Корбарон',
     adminProducts: 'Молҳо',
@@ -322,7 +322,7 @@ const translations = {
 
     // Seller Pages
     sellerOverviewTitle: 'Панели фурӯшанда',
-    sellerAccessOnly: 'Дастрасӣ танҳо барои нақши \'seller\'.',
+    sellerAccessOnly: 'Дастрасӣ танҳо барои фурӯшандагон.',
     sellerOverviewProductsTitle: 'Молҳо',
     sellerOverviewProductsSub: 'Илова кардани мол ва дидани рӯйхати молҳои худ.',
     sellerOverviewOrdersTitle: 'Фармоишҳо',
