@@ -18,6 +18,22 @@
   --border-color: #e2e8f0;
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --lang-selector-bg: rgba(15, 23, 42, 0.05);
+  --lang-btn-active-bg: #ffffff;
+  --auth-tab-active-bg: #ffffff;
+  --input-focus-bg: #ffffff;
+  --table-bg: #ffffff;
+  --table-hover-bg: rgba(248, 250, 252, 0.7);
+  --modal-bg: #ffffff;
+  --subnav-bg: rgba(15, 23, 42, 0.03);
+  --subnav-active-bg: #ffffff;
+  --toggle-btn-bg: rgba(15, 23, 42, 0.05);
+  --toggle-btn-hover-bg: rgba(15, 23, 42, 0.1);
+  --glow-1: rgba(99, 102, 241, 0.04);
+  --glow-2: rgba(217, 70, 239, 0.04);
+  --glow-3: rgba(99, 102, 241, 0.02);
+
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -35,6 +51,39 @@
   -webkit-font-smoothing: antialiased;
 }
 
+[data-theme='dark'] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --primary: #818cf8;
+  --primary-hover: #6366f1;
+  --primary-light: rgba(99, 102, 241, 0.15);
+  --border-color: #334155;
+  
+  --topbar-bg: rgba(15, 23, 42, 0.85);
+  --lang-selector-bg: rgba(255, 255, 255, 0.08);
+  --lang-btn-active-bg: #334155;
+  --auth-tab-active-bg: #1e293b;
+  --input-focus-bg: #1e293b;
+  --table-bg: #1e293b;
+  --table-hover-bg: rgba(15, 23, 42, 0.4);
+  --modal-bg: #1e293b;
+  --subnav-bg: rgba(255, 255, 255, 0.05);
+  --subnav-active-bg: #334155;
+  --toggle-btn-bg: rgba(255, 255, 255, 0.08);
+  --toggle-btn-hover-bg: rgba(255, 255, 255, 0.15);
+  --glow-1: rgba(99, 102, 241, 0.15);
+  --glow-2: rgba(217, 70, 239, 0.12);
+  --glow-3: rgba(99, 102, 241, 0.08);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.25), 0 15px 25px -10px rgba(0, 0, 0, 0.2);
+}
+
 * {
   box-sizing: border-box;
   transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -45,9 +94,9 @@ body {
   line-height: 1.5;
   background-attachment: fixed;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(217, 70, 239, 0.04) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.02) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, var(--glow-1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, var(--glow-2) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, var(--glow-3) 0px, transparent 50%);
 }
 
 a {
@@ -115,7 +164,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-  background: #ffffff;
+  background: var(--input-focus-bg);
 }
 
 label {
@@ -133,7 +182,7 @@ label {
   justify-content: space-between;
   gap: 24px;
   padding: 16px 40px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--topbar-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
@@ -252,10 +301,10 @@ label {
 /* Language selector in Header */
 .lang-selector {
   display: flex;
-  background: rgba(15, 23, 42, 0.05);
+  background: var(--lang-selector-bg);
   padding: 3px;
   border-radius: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border-color);
   margin-right: 8px;
 }
 
@@ -278,9 +327,34 @@ label {
 }
 
 .lang-btn.active {
-  background: #ffffff;
+  background: var(--lang-btn-active-bg);
   color: var(--primary) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: var(--toggle-btn-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: none !important;
+  margin-right: 8px;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--toggle-btn-hover-bg);
+  transform: scale(1.05) !important;
 }
 
 /* Auth Tabs */
@@ -313,7 +387,7 @@ label {
 }
 
 .auth-tab.active {
-  background: #ffffff;
+  background: var(--auth-tab-active-bg);
   color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
@@ -615,7 +689,7 @@ p {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--bg-secondary);
 }
 
 th, td {
@@ -626,7 +700,7 @@ th, td {
 }
 
 th {
-  background: #f8fafc;
+  background: var(--bg-primary);
   color: var(--text-muted);
   font-weight: 700;
   text-transform: uppercase;
@@ -635,7 +709,7 @@ th {
 }
 
 tr:hover td {
-  background: rgba(248, 250, 252, 0.7);
+  background: var(--table-hover-bg);
 }
 
 .table-image .product-image {
@@ -729,7 +803,7 @@ tr:hover td {
 
 .modal {
   width: min(540px, 100%);
-  background: #ffffff;
+  background: var(--modal-bg);
   border-radius: var(--radius-lg);
   padding: 32px;
   box-shadow: var(--shadow-xl);
@@ -819,7 +893,7 @@ tr:hover td {
   padding: 24px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  background: #ffffff;
+  background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -870,7 +944,7 @@ tr:hover td {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  background: rgba(15, 23, 42, 0.03);
+  background: var(--subnav-bg);
   padding: 4px;
   border-radius: var(--radius-md);
   width: fit-content;
@@ -886,7 +960,7 @@ tr:hover td {
 
 .subnav a.active,
 .subnav a:hover {
-  background: #ffffff;
+  background: var(--subnav-active-bg);
   color: var(--primary);
   box-shadow: var(--shadow-sm);
 }
