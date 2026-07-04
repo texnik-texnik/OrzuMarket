@@ -101,7 +101,7 @@ export function ShopPage() {
             <div className="product-body">
               <div className="product-title-row">
                 <h3>{product.name}</h3>
-                <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</strong>
+                <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</strong>
               </div>
               <p>{product.description || t('noDescription')}</p>
               <div className="muted">{t('inStock')}: {product.stock}</div>

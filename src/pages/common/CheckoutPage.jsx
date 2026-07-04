@@ -57,7 +57,7 @@ export function CheckoutPage() {
                 <div>
                   <h3>{item.name}</h3>
                   <p className="muted">
-                    {Number(item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'} · stock: {item.stock}
+                    {Number(item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')} · stock: {item.stock}
                   </p>
                 </div>
                 <input
@@ -69,7 +69,7 @@ export function CheckoutPage() {
                   onChange={(event) => setQuantity(item.id, event.target.value)}
                 />
                 <strong>
-                  {(item.quantity * item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}
+                  {(item.quantity * item.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
                 </strong>
                 <button type="button" className="danger" onClick={() => removeItem(item.id)}>{t('deleteBtn')}</button>
               </div>
@@ -77,7 +77,7 @@ export function CheckoutPage() {
           </div>
 
           <div className="checkout-footer">
-            <strong>{t('totalAmount')}: {totalAmount.toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</strong>
+            <strong>{t('totalAmount')}: {totalAmount.toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</strong>
             <button type="button" onClick={handleCheckout} disabled={submitting || !items.length}>
               {submitting ? t('placingOrder') : t('placeOrder')}
             </button>

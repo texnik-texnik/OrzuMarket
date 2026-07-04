@@ -90,7 +90,7 @@ export function AdminProductsPage() {
                   <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                   <td>{product.name}</td>
                   <td>{product.seller?.email ?? product.seller_id}</td>
-                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</td>
+                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                   <td>{product.stock}</td>
                   <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
                   <td className="actions-cell">

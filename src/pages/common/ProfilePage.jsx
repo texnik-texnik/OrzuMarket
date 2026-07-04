@@ -69,7 +69,7 @@ export function ProfilePage() {
                   <tr key={order.id}>
                     <td>{order.products?.name ?? order.product_id}</td>
                     <td>{order.quantity}</td>
-                    <td>{Number(order.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</td>
+                    <td>{Number(order.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                     <td><StatusBadge status={order.status} /></td>
                     <td>{new Date(order.created_at).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')}</td>
                   </tr>

@@ -113,7 +113,7 @@ export function SellerProductsPage() {
                 <tr key={product.id}>
                   <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                   <td>{product.name}</td>
-                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {lang === 'tg' ? 'TJS' : '₽'}</td>
+                  <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                   <td>{product.stock}</td>
                   <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
                   <td>{product.description || '—'}</td>

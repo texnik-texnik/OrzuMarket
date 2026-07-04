@@ -15,6 +15,7 @@ const translations = {
     user: 'Пользователь',
     role: 'роль',
     loading: 'Загрузка...',
+    currency: 'сомони',
 
     // Login page
     loginTitle: 'Вход в Orzu',
@@ -192,6 +193,7 @@ const translations = {
     user: 'Корбар',
     role: 'нақш',
     loading: 'Боргирӣ...',
+    currency: 'сомонӣ',
 
     // Login page
     loginTitle: 'Воридшавӣ ба Orzu',
