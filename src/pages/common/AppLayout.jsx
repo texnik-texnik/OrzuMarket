@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { useCart } from '../../cart/CartProvider';
 import { useTranslation } from '../../localization/LanguageProvider';
@@ -44,17 +44,19 @@ export function AppLayout() {
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
-          {isAuthenticated && (
-            <>
-              {role === 'admin' && <Link to="/admin">{t('admin')}</Link>}
-              {role === 'seller' && <Link to="/dashboard">{t('sellerDashboard')}</Link>}
-              <Link to="/shop">{t('shop')}</Link>
-              <Link to="/checkout">{t('cart')} ({totalQuantity})</Link>
-              <Link to="/profile">{t('profile')}</Link>
-              <button type="button" onClick={handleLogout}>{t('logout')}</button>
-            </>
+          
+          {isAuthenticated ? (
+            <div className="nav-links-desktop">
+              {role === 'admin' && <NavLink to="/admin" end>{t('admin')}</NavLink>}
+              {role === 'seller' && <NavLink to="/dashboard" end>{t('sellerDashboard')}</NavLink>}
+              <NavLink to="/shop">{t('shop')}</NavLink>
+              <NavLink to="/checkout">{t('cart')} ({totalQuantity})</NavLink>
+              <NavLink to="/profile">{t('profile')}</NavLink>
+              <button type="button" onClick={handleLogout} className="logout-btn">{t('logout')}</button>
+            </div>
+          ) : (
+            <NavLink to="/login" className="login-link-btn">{t('login')}</NavLink>
           )}
-          {!isAuthenticated && <Link to="/login">{t('login')}</Link>}
         </nav>
       </header>
 
@@ -72,6 +74,49 @@ export function AppLayout() {
       <main className="container">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      {isAuthenticated && (
+        <nav className="bottom-nav">
+          <NavLink to="/shop" className="bottom-nav-item">
+            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span>{t('shop')}</span>
+          </NavLink>
+          <NavLink to="/checkout" className="bottom-nav-item">
+            <div className="cart-icon-wrapper">
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
+            </div>
+            <span>{t('cart')}</span>
+          </NavLink>
+          {role === 'seller' && (
+            <NavLink to="/dashboard" className="bottom-nav-item" end>
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+              </svg>
+              <span>{t('mobileMenuSeller')}</span>
+            </NavLink>
+          )}
+          {role === 'admin' && (
+            <NavLink to="/admin" className="bottom-nav-item" end>
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>{t('mobileMenuAdmin')}</span>
+            </NavLink>
+          )}
+          <NavLink to="/profile" className="bottom-nav-item">
+            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>{t('profile')}</span>
+          </NavLink>
+        </nav>
+      )}
     </div>
   );
 }

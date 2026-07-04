@@ -155,6 +155,8 @@ const translations = {
     chartNoData: 'Нет данных о продажах за этот период',
     dashboardWelcome: 'Добро пожаловать, {name}!',
     quickNavigation: 'Быстрый переход',
+    mobileMenuSeller: 'Панель',
+    mobileMenuAdmin: 'Админ',
 
     // Seller Pages
     sellerOverviewTitle: 'Панель продавца',
@@ -347,6 +349,8 @@ const translations = {
     chartNoData: 'Дар ин давра маълумот дар бораи фурӯш нест',
     dashboardWelcome: 'Хуш омадед, {name}!',
     quickNavigation: 'Гузариши зуд',
+    mobileMenuSeller: 'Панел',
+    mobileMenuAdmin: 'Админ',
 
     // Seller Pages
     sellerOverviewTitle: 'Панели фурӯшанда',

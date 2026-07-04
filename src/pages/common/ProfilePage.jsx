@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { StatusBadge } from '../../components/StatusBadge';
 import { fetchMyOrders } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 
 export function ProfilePage() {
-  const { profile, user } = useAuth();
+  const { profile, user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [error, setError] = useState('');
   const { t, lang } = useTranslation();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     async function loadOrders() {
@@ -44,6 +51,14 @@ export function ProfilePage() {
           <dt>{t('statusLabelDl')}</dt>
           <dd>{profile?.is_blocked ? t('statusBlocked') : t('statusActive')}</dd>
         </dl>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="danger"
+          style={{ width: '100%', marginTop: '20px' }}
+        >
+          {t('logout')}
+        </button>
       </div>
 
       <div className="card" id="orders">
