@@ -96,8 +96,6 @@ export function LoginPage() {
       </div>
 
       <h1>{isRegister ? t('registerTitle') : t('loginTitle')}</h1>
-      
-      {!isRegister && <p>{t('authDemoNote')}</p>}
 
       {successMessage && <div className="success-message">{successMessage}</div>}
 

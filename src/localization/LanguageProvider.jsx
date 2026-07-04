@@ -22,8 +22,8 @@ const translations = {
     registerTitle: 'Регистрация в Orzu',
     authTabsLogin: 'Вход',
     authTabsRegister: 'Регистрация',
-    authDemoNote: 'После входа роль берётся из таблицы profiles.',
-    demoModeTitle: 'Демо-режим (Supabase не настроен)',
+    authDemoNote: '',
+    demoModeTitle: 'Демонстрационный режим',
     demoModeRegNote: 'В демонстрационном режиме вы можете создать любой аккаунт, и вход выполнится автоматически.',
     demoModeLoginNote: 'Войдите с помощью тестовых аккаунтов (пароль — любой):',
     fullNameLabel: 'Имя и фамилия',
@@ -63,7 +63,7 @@ const translations = {
 
     // CheckoutPage
     checkoutTitle: 'Оформление заказа',
-    checkoutNote: 'Корзина хранится в localStorage. При оформлении создаётся заказ в Supabase.',
+    checkoutNote: 'Пожалуйста, проверьте состав заказа перед его подтверждением.',
     backToShop: 'Вернуться в магазин',
     cartEmpty: 'Корзина пустая.',
     goToProducts: 'Перейти к товарам',
@@ -138,7 +138,7 @@ const translations = {
     productStatusHidden: 'Скрыт',
     actionHide: 'Скрыть',
     actionShow: 'Показать',
-    deleteConfirm: 'Удалить товар «{name}»? Если по нему есть заказы, Supabase может запретить удаление — тогда используйте «Скрыть».',
+    deleteConfirm: 'Удалить товар «{name}»? Если на него есть заказы, система может отклонить удаление — в таком случае используйте функцию «Скрыть».',
     errorDeleteProduct: 'Не удалось удалить товар',
     errorUpdateProduct: 'Не удалось обновить товар',
 
@@ -200,8 +200,8 @@ const translations = {
     registerTitle: 'Бақайдгирӣ дар Orzu',
     authTabsLogin: 'Воридшавӣ',
     authTabsRegister: 'Бақайдгирӣ',
-    authDemoNote: 'Пас аз воридшавӣ, нақш аз ҷадвали profiles гирифта мешавад.',
-    demoModeTitle: 'Ҳолати намоишӣ (Supabase танзим нашудааст)',
+    authDemoNote: '',
+    demoModeTitle: 'Ҳолати намоишӣ',
     demoModeRegNote: 'Дар ҳолати намоишӣ шумо метавонед дилхоҳ ҳисоб эҷод кунед ва воридшавӣ худкор иҷро мешавад.',
     demoModeLoginNote: 'Бо истифода аз ҳисобҳои санҷишӣ ворид шавед (парол — дилхоҳ):',
     fullNameLabel: 'Ном ва насаб',
@@ -241,7 +241,7 @@ const translations = {
 
     // CheckoutPage
     checkoutTitle: 'Барасмиятдарории фармоиш',
-    checkoutNote: 'Сабад дар localStorage нигоҳ дошта мешавад. Ҳангоми барасмиятдарорӣ дар Supabase фармоиш эҷод мешавад.',
+    checkoutNote: 'Лутфан, пеш аз тасдиқи фармоиш таркиби онро тафтиш кунед.',
     backToShop: 'Бозгашт ба мағоза',
     cartEmpty: 'Сабад холӣ аст.',
     goToProducts: 'Гузаштан ба молҳо',
@@ -316,7 +316,7 @@ const translations = {
     productStatusHidden: 'Пинҳон',
     actionHide: 'Пинҳон кардан',
     actionShow: 'Нишон додан',
-    deleteConfirm: 'Моли «{name}»-ро нест кунед? Агар нисбати он фармоишҳо бошанд, Supabase метавонад несткуниро манъ кунад — дар он сурат «Пинҳон кардан»-ро истифода баред.',
+    deleteConfirm: 'Моли «{name}»-ро нест кунед? Агар нисбати он фармоишҳо бошанд, система метавонад несткуниро рад кунад — дар он сурат «Пинҳон кардан»-ро истифода баред.',
     errorDeleteProduct: 'Нест кардани мол ноком шуд',
     errorUpdateProduct: 'Навсозии мол ноком шуд',
 
