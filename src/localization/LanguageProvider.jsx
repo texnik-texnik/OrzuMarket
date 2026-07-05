@@ -107,6 +107,10 @@ const translations = {
     orderTableHeaderStatus: 'Статус',
     orderTableHeaderDate: 'Дата',
     errorLoadOrders: 'Не удалось загрузить историю заказов',
+    editProfileBtn: 'Редактировать профиль',
+    saveProfileBtn: 'Сохранить',
+    cancelBtn: 'Отмена',
+    errorUpdateProfile: 'Не удалось обновить профиль',
 
     // BlockedPage
     blockedTitle: 'Ваш аккаунт заблокирован',
@@ -317,6 +321,10 @@ const translations = {
     orderTableHeaderStatus: 'Ҳолат',
     orderTableHeaderDate: 'Сана',
     errorLoadOrders: 'Боргирии таърихи фармоишҳо ноком шуд',
+    editProfileBtn: 'Таҳрири профил',
+    saveProfileBtn: 'Захира кардан',
+    cancelBtn: 'Бекор кардан',
+    errorUpdateProfile: 'Навсозии профил ноком шуд',
 
     // BlockedPage
     blockedTitle: 'Ҳисоби шумо масдуд шудааст',

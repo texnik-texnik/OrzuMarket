@@ -366,6 +366,35 @@ export async function updateUserBlocked(userId, isBlocked) {
   return data;
 }
 
+export async function updateUserProfile({ userId, fullName, phone }) {
+  if (!isSupabaseConfigured) {
+    const DEMO_AUTH_KEY = 'orzu_demo_auth_v1';
+    const users = readJson(DEMO_USERS_KEY, seedUsers);
+    const updatedUsers = users.map((user) =>
+      user.id === userId ? { ...user, full_name: fullName, phone } : user
+    );
+    writeJson(DEMO_USERS_KEY, updatedUsers);
+
+    const savedAuth = JSON.parse(localStorage.getItem(DEMO_AUTH_KEY) ?? 'null');
+    if (savedAuth && savedAuth.profile?.id === userId) {
+      savedAuth.profile.full_name = fullName;
+      savedAuth.profile.phone = phone;
+      localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(savedAuth));
+    }
+    return { id: userId, full_name: fullName, phone };
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName, phone })
+    .eq('id', userId)
+    .select('id, email, full_name, role, phone, is_blocked')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchAdminProducts() {
   if (!isSupabaseConfigured) {
     const users = readJson(DEMO_USERS_KEY, seedUsers);
