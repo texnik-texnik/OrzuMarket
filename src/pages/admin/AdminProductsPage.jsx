@@ -3,6 +3,7 @@ import { ProductImageWithFallback } from '../../components/ProductImage';
 import { deleteProduct, fetchAdminProducts, setProductActive } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { TableRowSkeleton } from '../../components/SkeletonLoaders';
+import { getCategoryIcon } from '../common/ShopPage';
 
 export function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -79,6 +80,7 @@ export function AdminProductsPage() {
               <tr>
                 <th>{t('tableHeaderPhoto')}</th>
                 <th>{t('tableHeaderTitle')}</th>
+                <th>{t('fieldCategory')}</th>
                 <th>{t('tableHeaderSeller')}</th>
                 <th>{t('tableHeaderPrice')}</th>
                 <th>{t('tableHeaderStock')}</th>
@@ -89,13 +91,18 @@ export function AdminProductsPage() {
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRowSkeleton key={idx} columns={7} />
+                  <TableRowSkeleton key={idx} columns={8} />
                 ))
               ) : (
                 products.map((product) => (
                   <tr key={product.id} className={!product.is_active ? 'row-muted' : ''}>
                     <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                     <td>{product.name}</td>
+                    <td>
+                      <span className="category-badge">
+                        {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
+                      </span>
+                    </td>
                     <td>{product.seller?.email ?? product.seller_id}</td>
                     <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                     <td>{product.stock}</td>

@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
-import { createSellerProduct, fetchSellerProducts } from '../../services/marketplace';
+import { createSellerProduct, fetchSellerProducts, PRODUCT_CATEGORIES } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { TableRowSkeleton } from '../../components/SkeletonLoaders';
+import { getCategoryIcon } from '../common/ShopPage';
 
-const initialForm = { name: '', price: '', description: '', photoFile: null, stock: 1 };
+const initialForm = { name: '', price: '', description: '', photoFile: null, stock: 1, category: '' };
 
 export function SellerProductsPage() {
   const { user } = useAuth();
@@ -102,6 +103,7 @@ export function SellerProductsPage() {
               <tr>
                 <th>{t('tableHeaderPhoto')}</th>
                 <th>{t('tableHeaderTitle')}</th>
+                <th>{t('fieldCategory')}</th>
                 <th>{t('tableHeaderPrice')}</th>
                 <th>{t('tableHeaderStock')}</th>
                 <th>{t('tableHeaderStatus')}</th>
@@ -111,13 +113,18 @@ export function SellerProductsPage() {
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRowSkeleton key={idx} columns={6} />
+                  <TableRowSkeleton key={idx} columns={7} />
                 ))
               ) : (
                 products.map((product) => (
                   <tr key={product.id}>
                     <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
                     <td>{product.name}</td>
+                    <td>
+                      <span className="category-badge">
+                        {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
+                      </span>
+                    </td>
                     <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                     <td>{product.stock}</td>
                     <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
@@ -136,6 +143,21 @@ export function SellerProductsPage() {
             <label>
               {t('fieldName')}
               <input value={form.name} onChange={(event) => setForm((value) => ({ ...value, name: event.target.value }))} required />
+            </label>
+            <label>
+              {t('fieldCategory')}
+              <select
+                value={form.category}
+                onChange={(event) => setForm((value) => ({ ...value, category: event.target.value }))}
+                required
+              >
+                <option value="" disabled>{t('categorySelect')}</option>
+                {PRODUCT_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {getCategoryIcon(cat)} {t(`category_${cat}`)}
+                  </option>
+                ))}
+              </select>
             </label>
             <label>
               {t('fieldPrice')}

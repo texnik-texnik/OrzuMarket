@@ -2,14 +2,28 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useCart } from '../../cart/CartProvider';
-import { fetchActiveProducts } from '../../services/marketplace';
+import { fetchActiveProducts, PRODUCT_CATEGORIES } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { ProductCardSkeleton } from '../../components/SkeletonLoaders';
+
+export function getCategoryIcon(cat) {
+  switch (cat) {
+    case 'electronics': return '📱';
+    case 'clothing': return '👕';
+    case 'home': return '🏠';
+    case 'beauty': return '💄';
+    case 'books': return '📚';
+    case 'sports': return '⚽';
+    case 'groceries': return '🍎';
+    case 'other': return '📦';
+    default: return '📦';
+  }
+}
 
 export function ShopPage() {
   const { addItem, totalQuantity } = useCart();
   const [products, setProducts] = useState([]);
-  const [filters, setFilters] = useState({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc' });
+  const [filters, setFilters] = useState({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc', category: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [addedId, setAddedId] = useState(null);
@@ -51,6 +65,27 @@ export function ShopPage() {
         <Link className="button-link" to="/checkout">{t('cart')} · {totalQuantity}</Link>
       </div>
 
+      {/* Category Chips */}
+      <div className="categories-tabs">
+        <button
+          type="button"
+          className={`category-tab ${!filters.category ? 'active' : ''}`}
+          onClick={() => setFilters((value) => ({ ...value, category: '' }))}
+        >
+          📂 {t('categoryAll')}
+        </button>
+        {PRODUCT_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`category-tab ${filters.category === cat ? 'active' : ''}`}
+            onClick={() => setFilters((value) => ({ ...value, category: cat }))}
+          >
+            {getCategoryIcon(cat)} {t(`category_${cat}`)}
+          </button>
+        ))}
+      </div>
+
       <div className="card filters-card">
         <input
           type="search"
@@ -82,7 +117,7 @@ export function ShopPage() {
           <option value="name.asc">{t('sortByName')}</option>
         </select>
         {hasFilters && (
-          <button type="button" className="secondary" onClick={() => setFilters({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc' })}>
+          <button type="button" className="secondary" onClick={() => setFilters({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc', category: '' })}>
             {t('resetFilters')}
           </button>
         )}
@@ -109,7 +144,12 @@ export function ShopPage() {
                   <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</strong>
                 </div>
                 <p>{product.description || t('noDescription')}</p>
-                <div className="muted">{t('inStock')}: {product.stock}</div>
+                <div className="product-meta-row">
+                  <span className="category-badge">
+                    {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
+                  </span>
+                  <div className="muted">{t('inStock')}: {product.stock}</div>
+                </div>
                 <button type="button" disabled={product.stock < 1} onClick={() => handleAdd(product)}>
                   {addedId === product.id ? t('addedSuccess') : t('addToCart')}
                 </button>

@@ -13,6 +13,17 @@ const DEMO_PRODUCTS_KEY = 'orzu_demo_products_v1';
 const DEMO_ORDERS_KEY = 'orzu_demo_orders_v1';
 const DEMO_USERS_KEY = 'orzu_demo_users_v1';
 
+export const PRODUCT_CATEGORIES = [
+  'electronics',
+  'clothing',
+  'home',
+  'beauty',
+  'books',
+  'sports',
+  'groceries',
+  'other',
+];
+
 const seedProducts = [
   {
     id: 'demo-product-1',
@@ -22,6 +33,7 @@ const seedProducts = [
     price: 2499,
     stock: 8,
     is_active: true,
+    category: 'electronics',
     photo_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
     created_at: new Date().toISOString(),
   },
@@ -33,6 +45,7 @@ const seedProducts = [
     price: 399,
     stock: 15,
     is_active: true,
+    category: 'electronics',
     photo_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800',
     created_at: new Date(Date.now() - 86400000).toISOString(),
   },
@@ -44,6 +57,7 @@ const seedProducts = [
     price: 799,
     stock: 4,
     is_active: true,
+    category: 'clothing',
     photo_url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800',
     created_at: new Date(Date.now() - 172800000).toISOString(),
   },
@@ -132,23 +146,25 @@ function sortDemoProducts(products, sort) {
   });
 }
 
-export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice = '', sort = 'created_at.desc' } = {}) {
+export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice = '', sort = 'created_at.desc', category = '' } = {}) {
   if (!isSupabaseConfigured) {
     let products = readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.is_active);
     if (search.trim()) products = products.filter((product) => product.name.toLowerCase().includes(search.trim().toLowerCase()));
     if (minPrice !== '') products = products.filter((product) => Number(product.price) >= Number(minPrice));
     if (maxPrice !== '') products = products.filter((product) => Number(product.price) <= Number(maxPrice));
+    if (category) products = products.filter((product) => (product.category || 'other') === category);
     return sortDemoProducts(products, sort);
   }
 
   let query = supabase
     .from('products')
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at')
+    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
     .eq('is_active', true);
 
   if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
   if (minPrice !== '') query = query.gte('price', Number(minPrice));
   if (maxPrice !== '') query = query.lte('price', Number(maxPrice));
+  if (category) query = query.eq('category', category);
 
   const [column, direction] = sort.split('.');
   query = query.order(column, { ascending: direction !== 'desc' });
@@ -220,7 +236,7 @@ export async function fetchSellerProducts(sellerId) {
 
   const { data, error } = await supabase
     .from('products')
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at')
+    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: false });
 
@@ -228,7 +244,7 @@ export async function fetchSellerProducts(sellerId) {
   return data ?? [];
 }
 
-export async function createSellerProduct({ sellerId, name, price, description, photoFile, stock }) {
+export async function createSellerProduct({ sellerId, name, price, description, photoFile, stock, category }) {
   const photoUrl = await uploadProductPhoto({ sellerId, photoFile });
 
   if (!isSupabaseConfigured) {
@@ -242,6 +258,7 @@ export async function createSellerProduct({ sellerId, name, price, description, 
       photo_url: photoUrl,
       stock: Number(stock) || 0,
       is_active: true,
+      category,
       created_at: new Date().toISOString(),
     };
     writeJson(DEMO_PRODUCTS_KEY, [product, ...products]);
@@ -258,8 +275,9 @@ export async function createSellerProduct({ sellerId, name, price, description, 
       photo_url: photoUrl,
       stock: Number(stock) || 0,
       is_active: true,
+      category,
     })
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at')
+    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
     .single();
 
   if (error) throw error;
@@ -360,7 +378,7 @@ export async function fetchAdminProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, seller_id, name, description, price, stock, is_active, photo_url, created_at,
+      id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
       seller:profiles!products_seller_id_fkey ( id, email, full_name )
     `)
     .order('created_at', { ascending: false });
