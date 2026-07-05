@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
     setProfileLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, role, is_blocked')
+      .select('id, email, full_name, role, phone, is_blocked')
       .eq('id', userId)
       .single();
 
@@ -142,7 +142,7 @@ export function AuthProvider({ children }) {
     return { user: data.user, profile: nextProfile };
   };
 
-  const signUp = useCallback(async ({ email, password, fullName, role = 'buyer' }) => {
+  const signUp = useCallback(async ({ email, password, fullName, role = 'buyer', phone }) => {
     if (!isSupabaseConfigured) {
       const demoAuth = {
         session: { user: { id: `demo-${role}-${Date.now()}`, email } },
@@ -151,6 +151,7 @@ export function AuthProvider({ children }) {
           email,
           full_name: fullName || `Demo ${role}`,
           role,
+          phone,
           is_blocked: false,
         },
       };
@@ -167,6 +168,7 @@ export function AuthProvider({ children }) {
         data: {
           full_name: fullName,
           role: role,
+          phone: phone,
         },
       },
     });

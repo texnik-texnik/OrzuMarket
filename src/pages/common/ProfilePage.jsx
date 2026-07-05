@@ -46,6 +46,8 @@ export function ProfilePage() {
           <dd>{profile?.email ?? user?.email}</dd>
           <dt>{t('fullNameLabelDl')}</dt>
           <dd>{profile?.full_name || '—'}</dd>
+          <dt>{t('phoneLabelDl')}</dt>
+          <dd>{profile?.phone ? (profile.phone.startsWith('+') ? profile.phone : `+992${profile.phone}`) : '—'}</dd>
           <dt>{t('roleLabelDl')}</dt>
           <dd>{profile?.role}</dd>
           <dt>{t('statusLabelDl')}</dt>

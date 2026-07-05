@@ -64,9 +64,9 @@ const seedProducts = [
 ];
 
 const seedUsers = [
-  { id: 'demo-admin', email: 'admin@demo.test', full_name: 'Demo Admin', role: 'admin', is_blocked: false, created_at: new Date().toISOString() },
-  { id: 'demo-seller', email: 'seller@demo.test', full_name: 'Demo Seller', role: 'seller', is_blocked: false, created_at: new Date().toISOString() },
-  { id: 'demo-buyer', email: 'buyer@demo.test', full_name: 'Demo Buyer', role: 'buyer', is_blocked: false, created_at: new Date().toISOString() },
+  { id: 'demo-admin', email: 'admin@demo.test', full_name: 'Demo Admin', role: 'admin', phone: '+992900000001', is_blocked: false, created_at: new Date().toISOString() },
+  { id: 'demo-seller', email: 'seller@demo.test', full_name: 'Demo Seller', role: 'seller', phone: '+992900000002', is_blocked: false, created_at: new Date().toISOString() },
+  { id: 'demo-buyer', email: 'buyer@demo.test', full_name: 'Demo Buyer', role: 'buyer', phone: '+992900000003', is_blocked: false, created_at: new Date().toISOString() },
 ];
 
 function readJson(key, fallback) {
@@ -323,7 +323,7 @@ export async function fetchAdminUsers() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, role, is_blocked, created_at')
+    .select('id, email, full_name, role, phone, is_blocked, created_at')
     .order('created_at', { ascending: false });
 
   if (error) throw error;

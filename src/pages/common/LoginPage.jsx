@@ -4,6 +4,13 @@ import { useAuth } from '../../auth/AuthProvider';
 import { getDefaultPathByRole } from '../../routes/roleRedirect';
 import { useTranslation } from '../../localization/LanguageProvider';
 
+const validatePassword = (pwd) => {
+  if (pwd.length < 8) return false;
+  const hasLetter = /[a-zA-Zа-яА-ЯёЁ]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  return hasLetter && hasNumber;
+};
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,6 +21,7 @@ export function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [roleSelection, setRoleSelection] = useState('buyer'); // 'buyer' or 'seller'
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -33,11 +41,24 @@ export function LoginPage() {
 
     try {
       if (isRegister) {
+        if (!validatePassword(password)) {
+          setError(t('errorWeakPassword'));
+          setSubmitting(false);
+          return;
+        }
+
+        if (phone.length !== 9) {
+          setError(t('errorInvalidPhone'));
+          setSubmitting(false);
+          return;
+        }
+
         const { session } = await signUp({
           email,
           password,
           fullName,
           role: roleSelection,
+          phone: '+992' + phone,
         });
 
         if (!session && !isDemoMode) {
@@ -45,6 +66,7 @@ export function LoginPage() {
           setFullName('');
           setEmail('');
           setPassword('');
+          setPhone('');
           setIsRegister(false); // Switch to login mode
         } else {
           const target = location.state?.from?.pathname;
@@ -128,6 +150,23 @@ export function LoginPage() {
               placeholder={t('fullNamePlaceholder')}
               required
             />
+          </label>
+        )}
+
+        {isRegister && (
+          <label>
+            {t('phoneLabel')}
+            <div className="phone-input-wrapper">
+              <span className="phone-prefix">+992</span>
+              <input
+                type="tel"
+                maxLength="9"
+                placeholder={t('phonePlaceholder')}
+                value={phone}
+                onChange={(event) => setPhone(event.target.value.replace(/\D/g, ''))}
+                required
+              />
+            </div>
           </label>
         )}
 

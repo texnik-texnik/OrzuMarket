@@ -77,6 +77,7 @@ export function AdminUsersPage() {
               <tr>
                 <th>{t('tableHeaderEmail')}</th>
                 <th>{t('tableHeaderName')}</th>
+                <th>{t('phoneLabelDl')}</th>
                 <th>{t('tableHeaderRole')}</th>
                 <th>{t('tableHeaderMakeSeller')}</th>
                 <th>{t('tableHeaderBlock')}</th>
@@ -89,6 +90,7 @@ export function AdminUsersPage() {
                   <tr key={target.id} className={target.is_blocked ? 'row-muted' : ''}>
                     <td>{target.email ?? target.id}</td>
                     <td>{target.full_name || '—'}</td>
+                    <td>{target.phone ? (target.phone.startsWith('+') ? target.phone : `+992${target.phone}`) : '—'}</td>
                     <td><span className="pill">{target.role}</span></td>
                     <td>
                       <label className="switch-label">
