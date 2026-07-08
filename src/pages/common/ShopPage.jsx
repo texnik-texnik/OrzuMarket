@@ -8,15 +8,57 @@ import { ProductCardSkeleton } from '../../components/SkeletonLoaders';
 
 export function getCategoryIcon(cat) {
   switch (cat) {
-    case 'electronics': return '📱';
-    case 'clothing': return '👕';
-    case 'home': return '🏠';
-    case 'beauty': return '💄';
-    case 'books': return '📚';
-    case 'sports': return '⚽';
-    case 'groceries': return '🍎';
-    case 'other': return '📦';
-    default: return '📦';
+    case 'electronics': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+      </svg>
+    );
+    case 'clothing': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M20.38 3.46L16 2a4 4 0 0 0-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l1.08 11.75a2 2 0 0 0 2 1.81h13.28a2 2 0 0 0 2-1.81l1.08-11.75a2 2 0 0 0-1.34-2.23z"></path>
+      </svg>
+    );
+    case 'home': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    );
+    case 'beauty': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+      </svg>
+    );
+    case 'books': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+    );
+    case 'sports': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M6 12A6 6 0 0 1 18 12"></path>
+        <path d="M12 6A6 6 0 0 1 12 18"></path>
+      </svg>
+    );
+    case 'groceries': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 2v4M12 18v4"></path>
+      </svg>
+    );
+    case 'other': return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      </svg>
+    );
+    default: return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      </svg>
+    );
   }
 }
 
@@ -72,7 +114,13 @@ export function ShopPage() {
           className={`category-tab ${!filters.category ? 'active' : ''}`}
           onClick={() => setFilters((value) => ({ ...value, category: '' }))}
         >
-          📂 {t('categoryAll')}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <rect x="3" y="3" width="7" height="9"></rect>
+            <rect x="14" y="3" width="7" height="5"></rect>
+            <rect x="14" y="12" width="7" height="9"></rect>
+            <rect x="3" y="16" width="7" height="5"></rect>
+          </svg>
+          {t('categoryAll')}
         </button>
         {PRODUCT_CATEGORIES.map((cat) => (
           <button
@@ -81,7 +129,8 @@ export function ShopPage() {
             className={`category-tab ${filters.category === cat ? 'active' : ''}`}
             onClick={() => setFilters((value) => ({ ...value, category: cat }))}
           >
-            {getCategoryIcon(cat)} {t(`category_${cat}`)}
+            {getCategoryIcon(cat)}
+            <span>{t(`category_${cat}`)}</span>
           </button>
         ))}
       </div>
