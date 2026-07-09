@@ -7,6 +7,7 @@ import { AppLayout } from './pages/common/AppLayout';
 import { HomePage } from './pages/common/HomePage';
 import { LoginPage } from './pages/common/LoginPage';
 import { ShopPage } from './pages/common/ShopPage';
+import { SellerShopPage } from './pages/common/SellerShopPage';
 import { ProfilePage } from './pages/common/ProfilePage';
 import { CheckoutPage } from './pages/common/CheckoutPage';
 import { BlockedPage } from './pages/common/BlockedPage';
@@ -53,6 +54,7 @@ export default function App() {
             {/* /shop и /profile — любой авторизованный пользователь */}
             <Route element={<ProtectedRoute />}>
               <Route path="shop" element={<ShopPage />} />
+              <Route path="seller-shop/:sellerId" element={<SellerShopPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="profile" element={<ProfilePage />} />
             </Route>

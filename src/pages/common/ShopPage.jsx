@@ -193,6 +193,12 @@ export function ShopPage() {
                   <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</strong>
                 </div>
                 <p>{product.description || t('noDescription')}</p>
+                <div style={{ marginBottom: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="text-muted">{t('seller')}:</span>
+                  <Link to={`/seller-shop/${product.seller_id}`} style={{ fontWeight: '600', color: 'var(--primary)', textDecoration: 'underline' }}>
+                    {product.seller?.full_name || product.seller?.email || t('seller')}
+                  </Link>
+                </div>
                 <div className="product-meta-row">
                   <span className="category-badge">
                     {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}

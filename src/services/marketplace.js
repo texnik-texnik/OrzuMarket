@@ -153,12 +153,21 @@ export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice
     if (minPrice !== '') products = products.filter((product) => Number(product.price) >= Number(minPrice));
     if (maxPrice !== '') products = products.filter((product) => Number(product.price) <= Number(maxPrice));
     if (category) products = products.filter((product) => (product.category || 'other') === category);
-    return sortDemoProducts(products, sort);
+    
+    const users = readJson(DEMO_USERS_KEY, seedUsers);
+    const enriched = products.map((product) => ({
+      ...product,
+      seller: users.find((user) => user.id === product.seller_id) ?? { full_name: 'Demo Seller', id: product.seller_id },
+    }));
+    return sortDemoProducts(enriched, sort);
   }
 
   let query = supabase
     .from('products')
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
+    .select(`
+      id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
+      seller:profiles!products_seller_id_fkey ( id, email, full_name )
+    `)
     .eq('is_active', true);
 
   if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
@@ -447,4 +456,142 @@ export async function deleteProduct(productId) {
     .eq('id', productId);
 
   if (error) throw error;
+}
+
+const DEMO_REVIEWS_KEY = 'orzu_demo_reviews_v1';
+
+const seedReviews = [
+  {
+    id: 'demo-review-1',
+    seller_id: 'demo-seller',
+    buyer_id: 'demo-buyer',
+    buyer_name: 'Алишер Содиқов',
+    rating: 5,
+    text: 'Аъло! Маҳсулотҳо хеле хубанд ва расонидани онҳо зуд буд.',
+    created_at: new Date(Date.now() - 3 * 86400000).toISOString()
+  },
+  {
+    id: 'demo-review-2',
+    seller_id: 'demo-seller',
+    buyer_id: 'demo-buyer-2',
+    buyer_name: 'Мадина Воҳидова',
+    rating: 4,
+    text: 'Хороший продавец, быстро отвечает и товар соответствует описанию.',
+    created_at: new Date(Date.now() - 10 * 86400000).toISOString()
+  }
+];
+
+export async function fetchSellerReviews(sellerId) {
+  if (!isSupabaseConfigured) {
+    const reviews = readJson(DEMO_REVIEWS_KEY, seedReviews);
+    return reviews.filter((r) => r.seller_id === sellerId);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('seller_reviews')
+      .select('*')
+      .eq('seller_id', sellerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (err) {
+    console.warn('Supabase seller_reviews table query failed, falling back to local demo reviews.', err.message);
+    const reviews = readJson(DEMO_REVIEWS_KEY, seedReviews);
+    return reviews.filter((r) => r.seller_id === sellerId);
+  }
+}
+
+export async function createSellerReview({ sellerId, buyerId, buyerName, rating, text }) {
+  const newReview = {
+    id: crypto.randomUUID(),
+    seller_id: sellerId,
+    buyer_id: buyerId,
+    buyer_name: buyerName || 'Покупатель',
+    rating: Number(rating),
+    text: text.trim(),
+    created_at: new Date().toISOString(),
+  };
+
+  if (!isSupabaseConfigured) {
+    const reviews = readJson(DEMO_REVIEWS_KEY, seedReviews);
+    const updated = [newReview, ...reviews];
+    writeJson(DEMO_REVIEWS_KEY, updated);
+    return newReview;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('seller_reviews')
+      .insert({
+        seller_id: sellerId,
+        buyer_id: buyerId,
+        buyer_name: buyerName || 'Покупатель',
+        rating: Number(rating),
+        text: text.trim(),
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn('Supabase seller_reviews insert failed, inserting to local demo reviews.', err.message);
+    const reviews = readJson(DEMO_REVIEWS_KEY, seedReviews);
+    const updated = [newReview, ...reviews];
+    writeJson(DEMO_REVIEWS_KEY, updated);
+    return newReview;
+  }
+}
+
+export async function fetchSellerProfile(sellerId) {
+  let profile = null;
+
+  if (!isSupabaseConfigured) {
+    const users = readJson(DEMO_USERS_KEY, seedUsers);
+    profile = users.find((u) => u.id === sellerId) || { id: sellerId, full_name: 'Demo Seller', email: 'seller@demo.test', phone: '+992900000002' };
+  } else {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, role, phone, is_blocked, created_at')
+      .eq('id', sellerId)
+      .single();
+    
+    if (error) {
+      console.warn('Could not load profile from Supabase, loading fallback.');
+      profile = { id: sellerId, full_name: 'Seller', email: 'seller@example.com' };
+    } else {
+      profile = data;
+    }
+  }
+
+  // Load reviews to aggregate rating
+  const reviews = await fetchSellerReviews(sellerId);
+  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const averageRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+
+  // Load seller active products count
+  let products = [];
+  if (!isSupabaseConfigured) {
+    products = readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((p) => p.seller_id === sellerId && p.is_active);
+  } else {
+    try {
+      const { data } = await supabase
+        .from('products')
+        .select('id')
+        .eq('seller_id', sellerId)
+        .eq('is_active', true);
+      products = data ?? [];
+    } catch {
+      products = [];
+    }
+  }
+
+  return {
+    ...profile,
+    average_rating: averageRating,
+    reviews_count: reviews.length,
+    products_count: products.length,
+  };
 }
