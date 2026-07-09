@@ -127,7 +127,9 @@ async function uploadProductPhoto({ sellerId, photoFile }) {
       contentType: photoFile.type || 'image/jpeg',
     });
 
-  if (uploadError) throw uploadError;
+  if (uploadError) {
+    throw new Error('Не удалось загрузить изображение. Убедитесь, что в Supabase Console создан Storage-бакет "product-photos" с публичным доступом (Public). Ошибка: ' + uploadError.message);
+  }
 
   const { data } = supabase.storage
     .from('product-photos')
@@ -254,7 +256,12 @@ export async function fetchSellerProducts(sellerId) {
 }
 
 export async function createSellerProduct({ sellerId, name, price, description, photoFile, stock, category }) {
-  const photoUrl = await uploadProductPhoto({ sellerId, photoFile });
+  let photoUrl = '';
+  try {
+    photoUrl = await uploadProductPhoto({ sellerId, photoFile });
+  } catch (err) {
+    throw new Error('Ошибка хранилища: ' + (err.message ?? err));
+  }
 
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
@@ -274,6 +281,7 @@ export async function createSellerProduct({ sellerId, name, price, description, 
     return product;
   }
 
+  // Attempt insert with category column
   const { data, error } = await supabase
     .from('products')
     .insert({
@@ -287,9 +295,41 @@ export async function createSellerProduct({ sellerId, name, price, description, 
       category,
     })
     .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
-    .single();
+    .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    // Check if error is due to RLS policies
+    if (error.message && error.message.toLowerCase().includes('row-level security')) {
+      throw new Error('Ошибка прав доступа (RLS): Пожалуйста, отключите RLS для таблицы "products" в Supabase Console или добавьте политику разрешения вставки (INSERT) для продавцов.');
+    }
+    
+    // Check if category column doesn't exist (self-healing retry)
+    if (error.message && (error.message.includes('category') || error.code === '42703')) {
+      console.warn('Column "category" does not exist in Supabase products table. Retrying insert without it.');
+      const { data: retryData, error: retryError } = await supabase
+        .from('products')
+        .insert({
+          seller_id: sellerId,
+          name,
+          price: Number(price),
+          description,
+          photo_url: photoUrl,
+          stock: Number(stock) || 0,
+          is_active: true,
+        })
+        .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at')
+        .maybeSingle();
+
+      if (retryError) {
+        if (retryError.message && retryError.message.toLowerCase().includes('row-level security')) {
+          throw new Error('Ошибка прав доступа (RLS): Пожалуйста, отключите RLS для таблицы "products" в Supabase Console или добавьте политику разрешения вставки (INSERT) для продавцов.');
+        }
+        throw retryError;
+      }
+      return { ...retryData, category: '' };
+    }
+    throw error;
+  }
   return data;
 }
 

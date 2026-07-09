@@ -942,7 +942,7 @@ tr:hover td {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 2000; /* Layer on top of bottom navigation (z-index: 1000) */
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(8px);
   display: grid;
@@ -956,9 +956,20 @@ tr:hover td {
   border-radius: var(--radius-lg);
   padding: 32px;
   box-shadow: var(--shadow-xl);
-  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   position: relative;
+}
+
+@media (max-width: 820px) {
+  .modal-backdrop {
+    padding: 12px;
+  }
+  .modal {
+    padding: 24px;
+    max-height: calc(100dvh - 24px);
+    border-radius: var(--radius-md);
+  }
 }
 
 .modal-header {

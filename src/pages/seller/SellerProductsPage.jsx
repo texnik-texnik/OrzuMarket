@@ -183,6 +183,7 @@ export function SellerProductsPage() {
               </div>
             )}
 
+            {error && <p className="error" style={{ margin: '14px 0', padding: '10px 14px' }}>{error}</p>}
             <button type="submit" disabled={submitting}>{submitting ? t('creatingBtn') : t('createBtn')}</button>
           </form>
         </Modal>
