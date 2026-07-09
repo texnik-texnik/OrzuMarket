@@ -80,10 +80,14 @@ export function AuthProvider({ children }) {
     }
 
     // Auto-sync email into profiles table if null
-    if (profileData && !profileData.email && session?.user?.email) {
+    if (profileData && !profileData.email) {
       try {
-        await supabase.from('profiles').update({ email: session.user.email }).eq('id', userId);
-        profileData.email = session.user.email;
+        const { data: authData } = await supabase.auth.getUser();
+        const userEmail = authData?.user?.email;
+        if (userEmail) {
+          await supabase.from('profiles').update({ email: userEmail }).eq('id', userId);
+          profileData.email = userEmail;
+        }
       } catch (syncErr) {
         console.warn('Failed to sync email to profiles table on load:', syncErr);
       }
@@ -91,7 +95,7 @@ export function AuthProvider({ children }) {
 
     setProfile(profileData);
     return profileData;
-  }, [session]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
