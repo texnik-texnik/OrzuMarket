@@ -16,6 +16,7 @@ export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
@@ -48,9 +49,11 @@ export function ProfilePage() {
       await updateUserProfile({
         userId: user.id,
         fullName: fullName.trim(),
-        phone: '+992' + phone
+        phone: '+992' + phone,
+        photoFile
       });
       await refreshProfile();
+      setPhotoFile(null);
       setIsEditing(false);
     } catch (err) {
       setSaveError(err.message ?? t('errorUpdateProfile'));
@@ -80,7 +83,41 @@ export function ProfilePage() {
     <section className="profile-grid">
       <div className="card">
         <h1>{t('profileTitle')}</h1>
-        
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={profile.full_name || 'Avatar'}
+              style={{
+                width: '96px',
+                height: '96px',
+                borderRadius: 'var(--radius-md)',
+                objectFit: 'cover',
+                border: '1px solid var(--border-color)',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            />
+          ) : (
+            <div style={{
+              width: '96px',
+              height: '96px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--primary-light)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: '800',
+              fontSize: '36px',
+              textTransform: 'uppercase',
+              border: '1px solid var(--border-color)'
+            }}>
+              {(profile?.full_name || user?.email || '?').charAt(0)}
+            </div>
+          )}
+        </div>
+
         {!isEditing ? (
           <>
             <dl className="profile-list">
@@ -93,7 +130,7 @@ export function ProfilePage() {
               <dt>{t('phoneLabelDl')}</dt>
               <dd>{profile?.phone ? (profile.phone.startsWith('+') ? profile.phone : `+992${profile.phone}`) : '—'}</dd>
               <dt>{t('roleLabelDl')}</dt>
-              <dd>{profile?.role}</dd>
+              <dd>{t('role_' + profile?.role) || profile?.role}</dd>
               <dt>{t('statusLabelDl')}</dt>
               <dd>{profile?.is_blocked ? t('statusBlocked') : t('statusActive')}</dd>
             </dl>
@@ -138,9 +175,19 @@ export function ProfilePage() {
                   />
                 </div>
               </dd>
+
+              <dt>{t('fieldPhoto') || 'Фото профиля'}</dt>
+              <dd>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                  style={{ border: 'none', background: 'transparent', boxShadow: 'none', padding: '6px 0' }}
+                />
+              </dd>
               
               <dt>{t('roleLabelDl')}</dt>
-              <dd>{profile?.role}</dd>
+              <dd>{t('role_' + profile?.role) || profile?.role}</dd>
               <dt>{t('statusLabelDl')}</dt>
               <dd>{profile?.is_blocked ? t('statusBlocked') : t('statusActive')}</dd>
             </dl>

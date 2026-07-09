@@ -91,7 +91,7 @@ export function AdminUsersPage() {
                     <td>{target.email ?? target.id}</td>
                     <td>{target.full_name || '—'}</td>
                     <td>{target.phone ? (target.phone.startsWith('+') ? target.phone : `+992${target.phone}`) : '—'}</td>
-                    <td><span className="pill">{target.role}</span></td>
+                    <td><span className="pill">{t('role_' + target.role) || target.role}</span></td>
                     <td>
                       <label className="switch-label">
                         <input

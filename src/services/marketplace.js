@@ -189,6 +189,17 @@ export async function createOrdersFromCart({ buyerId, items }) {
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
     const orders = readJson(DEMO_ORDERS_KEY, []);
+    
+    // Decrement stock for local demo products
+    const updatedProducts = products.map((prod) => {
+      const cartItem = items.find((item) => item.id === prod.id);
+      if (cartItem) {
+        return { ...prod, stock: Math.max(0, prod.stock - cartItem.quantity) };
+      }
+      return prod;
+    });
+    writeJson(DEMO_PRODUCTS_KEY, updatedProducts);
+
     const newOrders = items.map((item) => {
       const product = products.find((value) => value.id === item.id) ?? item;
       return {
@@ -222,6 +233,31 @@ export async function createOrdersFromCart({ buyerId, items }) {
     .select('id, status, quantity, total, created_at');
 
   if (error) throw error;
+
+  // Decrement stock in Supabase database products table
+  try {
+    await Promise.all(
+      items.map(async (item) => {
+        const { data: prodData } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.id)
+          .maybeSingle();
+        
+        if (prodData) {
+          const currentStock = prodData.stock || 0;
+          const newStock = Math.max(0, currentStock - item.quantity);
+          await supabase
+            .from('products')
+            .update({ stock: newStock })
+            .eq('id', item.id);
+        }
+      })
+    );
+  } catch (stockError) {
+    console.error('Failed to update product stock:', stockError);
+  }
+
   return data ?? [];
 }
 
@@ -415,12 +451,47 @@ export async function updateUserBlocked(userId, isBlocked) {
   return data;
 }
 
-export async function updateUserProfile({ userId, fullName, phone }) {
+export async function uploadAvatarPhoto({ userId, photoFile }) {
+  if (!photoFile) return '';
+
+  if (!isSupabaseConfigured) {
+    return fileToDataUrl(photoFile);
+  }
+
+  const extension = getFileExtension(photoFile);
+  const filePath = `avatars/${userId}.${extension}`;
+
+  // Reuse the product-photos bucket to ensure it doesn't fail if they don't have an "avatars" bucket
+  const { error: uploadError } = await supabase.storage
+    .from('product-photos')
+    .upload(filePath, photoFile, {
+      cacheControl: '3600',
+      upsert: true, // Upsert replaces the file if it already exists
+      contentType: photoFile.type || 'image/jpeg',
+    });
+
+  if (uploadError) {
+    throw new Error('Не удалось загрузить аватар: ' + uploadError.message);
+  }
+
+  const { data } = supabase.storage
+    .from('product-photos')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+export async function updateUserProfile({ userId, fullName, phone, photoFile }) {
+  let avatarUrl = '';
+  if (photoFile) {
+    avatarUrl = await uploadAvatarPhoto({ userId, photoFile });
+  }
+
   if (!isSupabaseConfigured) {
     const DEMO_AUTH_KEY = 'orzu_demo_auth_v1';
     const users = readJson(DEMO_USERS_KEY, seedUsers);
     const updatedUsers = users.map((user) =>
-      user.id === userId ? { ...user, full_name: fullName, phone } : user
+      user.id === userId ? { ...user, full_name: fullName, phone, avatar_url: avatarUrl || user.avatar_url } : user
     );
     writeJson(DEMO_USERS_KEY, updatedUsers);
 
@@ -428,19 +499,42 @@ export async function updateUserProfile({ userId, fullName, phone }) {
     if (savedAuth && savedAuth.profile?.id === userId) {
       savedAuth.profile.full_name = fullName;
       savedAuth.profile.phone = phone;
+      if (avatarUrl) {
+        savedAuth.profile.avatar_url = avatarUrl;
+      }
       localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(savedAuth));
     }
-    return { id: userId, full_name: fullName, phone };
+    return { id: userId, full_name: fullName, phone, avatar_url: avatarUrl };
+  }
+
+  const updateFields = { full_name: fullName, phone };
+  if (avatarUrl) {
+    updateFields.avatar_url = avatarUrl;
   }
 
   const { data, error } = await supabase
     .from('profiles')
-    .update({ full_name: fullName, phone })
+    .update(updateFields)
     .eq('id', userId)
-    .select('id, email, full_name, role, phone, is_blocked')
-    .single();
+    .select('id, email, full_name, role, phone, is_blocked, avatar_url')
+    .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    // If the avatar_url column doesn't exist, retry update without it
+    if (error.message && (error.message.includes('avatar_url') || error.code === '42703')) {
+      console.warn('Column "avatar_url" does not exist in profiles table. Retrying update without it.');
+      const { data: retryData, error: retryError } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName, phone })
+        .eq('id', userId)
+        .select('id, email, full_name, role, phone, is_blocked')
+        .maybeSingle();
+
+      if (retryError) throw retryError;
+      return retryData;
+    }
+    throw error;
+  }
   return data;
 }
 

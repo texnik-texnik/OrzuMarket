@@ -75,7 +75,7 @@ export function AppLayout() {
             {t('user')}: <strong>{profile?.email ?? '—'}</strong>
           </div>
           <div>
-            {t('role')}: <strong>{role ?? '—'}</strong>
+            {t('role')}: <strong>{t('role_' + role) || role ?? '—'}</strong>
           </div>
         </div>
       )}

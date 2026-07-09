@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
-import { createSellerProduct, fetchSellerProducts, PRODUCT_CATEGORIES } from '../../services/marketplace';
+import { createSellerProduct, fetchSellerProducts, deleteProduct, PRODUCT_CATEGORIES } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { TableRowSkeleton } from '../../components/SkeletonLoaders';
 import { getCategoryIcon } from '../common/ShopPage';
@@ -17,7 +17,24 @@ export function SellerProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
   const { t, lang } = useTranslation();
+
+  const handleDelete = async (product) => {
+    const ok = window.confirm(t('deleteConfirm', { name: product.name }) || `Удалить товар "${product.name}"?`);
+    if (!ok) return;
+
+    setUpdatingId(product.id);
+    setError('');
+    try {
+      await deleteProduct(product.id);
+      setProducts((current) => current.filter((item) => item.id !== product.id));
+    } catch (err) {
+      setError(err.message ?? t('errorDeleteProduct'));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const photoPreview = useMemo(() => {
     if (!form.photoFile) return '';
@@ -108,12 +125,13 @@ export function SellerProductsPage() {
                 <th>{t('tableHeaderStock')}</th>
                 <th>{t('tableHeaderStatus')}</th>
                 <th>{t('tableHeaderDescription')}</th>
+                <th>{t('tableHeaderAction')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRowSkeleton key={idx} columns={7} />
+                  <TableRowSkeleton key={idx} columns={8} />
                 ))
               ) : (
                 products.map((product) => (
@@ -129,6 +147,11 @@ export function SellerProductsPage() {
                     <td>{product.stock}</td>
                     <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
                     <td>{product.description || '—'}</td>
+                    <td className="actions-cell">
+                      <button type="button" className="danger" disabled={updatingId === product.id} onClick={() => handleDelete(product)}>
+                        {t('deleteBtn')}
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

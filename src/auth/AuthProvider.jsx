@@ -46,23 +46,52 @@ export function AuthProvider({ children }) {
     }
 
     setProfileLoading(true);
+    let profileData = null;
+    let profileError = null;
+
+    // Try selecting with avatar_url
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, role, phone, is_blocked')
+      .select('id, email, full_name, role, phone, is_blocked, avatar_url')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
+
+    profileData = data;
+    profileError = error;
+
+    if (error && (error.message.includes('avatar_url') || error.code === '42703')) {
+      // Retry without avatar_url if column does not exist
+      const { data: retryData, error: retryError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, role, phone, is_blocked')
+        .eq('id', userId)
+        .maybeSingle();
+
+      profileData = retryData;
+      profileError = retryError;
+    }
 
     setProfileLoading(false);
 
-    if (error) {
-      console.error('Failed to load profile:', error);
+    if (profileError) {
+      console.error('Failed to load profile:', profileError);
       setProfile(null);
       return null;
     }
 
-    setProfile(data);
-    return data;
-  }, []);
+    // Auto-sync email into profiles table if null
+    if (profileData && !profileData.email && session?.user?.email) {
+      try {
+        await supabase.from('profiles').update({ email: session.user.email }).eq('id', userId);
+        profileData.email = session.user.email;
+      } catch (syncErr) {
+        console.warn('Failed to sync email to profiles table on load:', syncErr);
+      }
+    }
+
+    setProfile(profileData);
+    return profileData;
+  }, [session]);
 
   useEffect(() => {
     let mounted = true;
@@ -138,6 +167,15 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
+    // Sync email on login just in case it is missing in profiles
+    if (data.user?.id) {
+      try {
+        await supabase.from('profiles').update({ email: data.user.email }).eq('id', data.user.id);
+      } catch (syncErr) {
+        console.warn('Failed to sync email to profiles table on login:', syncErr);
+      }
+    }
+
     const nextProfile = await loadProfile(data.user.id);
     return { user: data.user, profile: nextProfile };
   };
@@ -174,6 +212,21 @@ export function AuthProvider({ children }) {
     });
 
     if (error) throw error;
+
+    // Manually insert/upsert profile row with email to ensure it's in public.profiles table
+    if (data.user?.id) {
+      try {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: email,
+          full_name: fullName,
+          role: role,
+          phone: phone,
+        });
+      } catch (upsertErr) {
+        console.warn('Failed to upsert profile record on signup:', upsertErr);
+      }
+    }
 
     let nextProfile = null;
     if (data.session?.user?.id) {
