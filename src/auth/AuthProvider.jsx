@@ -46,55 +46,61 @@ export function AuthProvider({ children }) {
     }
 
     setProfileLoading(true);
-    let profileData = null;
-    let profileError = null;
+    try {
+      let profileData = null;
+      let profileError = null;
 
-    // Try selecting with avatar_url
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role, phone, is_blocked, avatar_url')
-      .eq('id', userId)
-      .maybeSingle();
-
-    profileData = data;
-    profileError = error;
-
-    if (error && (error.message.includes('avatar_url') || error.code === '42703')) {
-      // Retry without avatar_url if column does not exist
-      const { data: retryData, error: retryError } = await supabase
+      // Try selecting with avatar_url
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, phone, is_blocked')
+        .select('id, email, full_name, role, phone, is_blocked, avatar_url')
         .eq('id', userId)
         .maybeSingle();
 
-      profileData = retryData;
-      profileError = retryError;
-    }
+      profileData = data;
+      profileError = error;
 
-    setProfileLoading(false);
+      if (error && (error.message.includes('avatar_url') || error.code === '42703')) {
+        // Retry without avatar_url if column does not exist
+        const { data: retryData, error: retryError } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, role, phone, is_blocked')
+          .eq('id', userId)
+          .maybeSingle();
 
-    if (profileError) {
-      console.error('Failed to load profile:', profileError);
+        profileData = retryData;
+        profileError = retryError;
+      }
+
+      if (profileError) {
+        console.error('Failed to load profile:', profileError);
+        setProfile(null);
+        return null;
+      }
+
+      // Auto-sync email into profiles table if null
+      if (profileData && !profileData.email) {
+        try {
+          const { data: authData } = await supabase.auth.getUser();
+          const userEmail = authData?.user?.email;
+          if (userEmail) {
+            await supabase.from('profiles').update({ email: userEmail }).eq('id', userId);
+            profileData.email = userEmail;
+          }
+        } catch (syncErr) {
+          console.warn('Failed to sync email to profiles table on load:', syncErr);
+        }
+      }
+
+      setProfile(profileData);
+      return profileData;
+    } catch (err) {
+      console.error('Unhandled error loading profile:', err);
       setProfile(null);
       return null;
+    } finally {
+      setProfileLoading(false);
     }
-
-    // Auto-sync email into profiles table if null
-    if (profileData && !profileData.email) {
-      try {
-        const { data: authData } = await supabase.auth.getUser();
-        const userEmail = authData?.user?.email;
-        if (userEmail) {
-          await supabase.from('profiles').update({ email: userEmail }).eq('id', userId);
-          profileData.email = userEmail;
-        }
-      } catch (syncErr) {
-        console.warn('Failed to sync email to profiles table on load:', syncErr);
-      }
-    }
-
-    setProfile(profileData);
-    return profileData;
   }, []);
 
   useEffect(() => {
@@ -111,26 +117,31 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      const { data, error } = await supabase.auth.getSession();
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (error) {
-        console.error('Failed to get session:', error);
+        if (error) {
+          console.error('Failed to get session:', error);
+          setSession(null);
+          setProfile(null);
+          return;
+        }
+
+        const currentSession = data.session;
+        setSession(currentSession);
+
+        if (currentSession?.user?.id) {
+          await loadProfile(currentSession.user.id);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
         setSession(null);
         setProfile(null);
-        setLoading(false);
-        return;
+      } finally {
+        if (mounted) setLoading(false);
       }
-
-      const currentSession = data.session;
-      setSession(currentSession);
-
-      if (currentSession?.user?.id) {
-        await loadProfile(currentSession.user.id);
-      }
-
-      if (mounted) setLoading(false);
     }
 
     initAuth();
@@ -142,15 +153,20 @@ export function AuthProvider({ children }) {
     }
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
+      try {
+        setSession(nextSession);
 
-      if (nextSession?.user?.id) {
-        await loadProfile(nextSession.user.id);
-      } else {
+        if (nextSession?.user?.id) {
+          await loadProfile(nextSession.user.id);
+        } else {
+          setProfile(null);
+        }
+      } catch (err) {
+        console.error('Error on auth state change:', err);
         setProfile(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => {
