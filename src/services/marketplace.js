@@ -190,26 +190,38 @@ export async function createOrdersFromCart({ buyerId, items }) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
     const orders = readJson(DEMO_ORDERS_KEY, []);
     
+    // Validate stock and verify prices
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.id);
+      if (!product) {
+        throw new Error(`Товар не найден в базе данных`);
+      }
+      if (product.stock < item.quantity) {
+        throw new Error(`Недостаточно товара "${product.name}" на складе (доступно: ${product.stock})`);
+      }
+    }
+
     // Decrement stock for local demo products
     const updatedProducts = products.map((prod) => {
       const cartItem = items.find((item) => item.id === prod.id);
       if (cartItem) {
-        return { ...prod, stock: Math.max(0, prod.stock - cartItem.quantity) };
+        return { ...prod, stock: prod.stock - cartItem.quantity };
       }
       return prod;
     });
     writeJson(DEMO_PRODUCTS_KEY, updatedProducts);
 
     const newOrders = items.map((item) => {
-      const product = products.find((value) => value.id === item.id) ?? item;
+      const product = products.find((value) => value.id === item.id);
+      const price = Number(product.price);
       return {
         id: crypto.randomUUID(),
         buyer_id: buyerId,
         product_id: item.id,
         seller_id: product.seller_id,
         quantity: item.quantity,
-        unit_price: Number(product.price),
-        total: item.quantity * Number(product.price),
+        unit_price: price,
+        total: item.quantity * price,
         status: 'new',
         created_at: new Date().toISOString(),
         products: { id: product.id, name: product.name, photo_url: product.photo_url },
@@ -219,13 +231,35 @@ export async function createOrdersFromCart({ buyerId, items }) {
     return newOrders;
   }
 
-  const rows = items.map((item) => ({
-    buyer_id: buyerId,
-    product_id: item.id,
-    seller_id: item.seller_id,
-    quantity: item.quantity,
-    unit_price: item.price,
-  }));
+  const productIds = items.map((item) => item.id);
+  const { data: dbProducts, error: fetchError } = await supabase
+    .from('products')
+    .select('id, name, price, stock, seller_id')
+    .in('id', productIds);
+
+  if (fetchError) throw fetchError;
+
+  // Validate stock and verify prices
+  for (const item of items) {
+    const dbProduct = dbProducts.find((p) => p.id === item.id);
+    if (!dbProduct) {
+      throw new Error(`Товар "${item.name}" не найден в базе данных`);
+    }
+    if (dbProduct.stock < item.quantity) {
+      throw new Error(`Недостаточно товара "${dbProduct.name}" на складе (доступно: ${dbProduct.stock})`);
+    }
+  }
+
+  const rows = items.map((item) => {
+    const dbProduct = dbProducts.find((p) => p.id === item.id);
+    return {
+      buyer_id: buyerId,
+      product_id: item.id,
+      seller_id: dbProduct.seller_id,
+      quantity: item.quantity,
+      unit_price: dbProduct.price, // Использовать цену из БД!
+    };
+  });
 
   const { data, error } = await supabase
     .from('orders')
@@ -238,15 +272,9 @@ export async function createOrdersFromCart({ buyerId, items }) {
   try {
     await Promise.all(
       items.map(async (item) => {
-        const { data: prodData } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.id)
-          .maybeSingle();
-        
-        if (prodData) {
-          const currentStock = prodData.stock || 0;
-          const newStock = Math.max(0, currentStock - item.quantity);
+        const dbProduct = dbProducts.find((p) => p.id === item.id);
+        if (dbProduct) {
+          const newStock = Math.max(0, dbProduct.stock - item.quantity);
           await supabase
             .from('products')
             .update({ stock: newStock })
