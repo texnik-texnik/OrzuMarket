@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  const loadProfile = useCallback(async (userId) => {
+  const loadProfile = useCallback(async (userId, email = null) => {
     if (!userId) {
       setProfile(null);
       return null;
@@ -79,14 +79,10 @@ export function AuthProvider({ children }) {
       }
 
       // Auto-sync email into profiles table if null
-      if (profileData && !profileData.email) {
+      if (profileData && !profileData.email && email) {
         try {
-          const { data: authData } = await supabase.auth.getUser();
-          const userEmail = authData?.user?.email;
-          if (userEmail) {
-            await supabase.from('profiles').update({ email: userEmail }).eq('id', userId);
-            profileData.email = userEmail;
-          }
+          await supabase.from('profiles').update({ email }).eq('id', userId);
+          profileData.email = email;
         } catch (syncErr) {
           console.warn('Failed to sync email to profiles table on load:', syncErr);
         }
@@ -133,7 +129,7 @@ export function AuthProvider({ children }) {
         setSession(currentSession);
 
         if (currentSession?.user?.id) {
-          await loadProfile(currentSession.user.id);
+          await loadProfile(currentSession.user.id, currentSession.user.email);
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -157,7 +153,7 @@ export function AuthProvider({ children }) {
         setSession(nextSession);
 
         if (nextSession?.user?.id) {
-          await loadProfile(nextSession.user.id);
+          await loadProfile(nextSession.user.id, nextSession.user.email);
         } else {
           setProfile(null);
         }
@@ -196,7 +192,7 @@ export function AuthProvider({ children }) {
       }
     }
 
-    const nextProfile = await loadProfile(data.user.id);
+    const nextProfile = await loadProfile(data.user.id, data.user.email);
     return { user: data.user, profile: nextProfile };
   };
 
@@ -250,7 +246,7 @@ export function AuthProvider({ children }) {
 
     let nextProfile = null;
     if (data.session?.user?.id) {
-      nextProfile = await loadProfile(data.session.user.id);
+      nextProfile = await loadProfile(data.session.user.id, data.session.user.email);
     }
     return { user: data.user, session: data.session, profile: nextProfile };
   }, [loadProfile]);
@@ -280,7 +276,7 @@ export function AuthProvider({ children }) {
     signInWithPassword,
     signUp,
     signOut,
-    refreshProfile: () => loadProfile(session?.user?.id),
+    refreshProfile: () => loadProfile(session?.user?.id, session?.user?.email),
   }), [session, profile, loading, profileLoading, loadProfile, signUp]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
