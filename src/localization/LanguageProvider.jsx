@@ -232,6 +232,19 @@ const translations = {
     status_shipped: 'В пути',
     status_completed: 'Завершён',
     status_cancelled: 'Отменён',
+
+    // Product Details
+    productDetailsTitle: 'Детали товара',
+    backToShop: 'Назад в магазин',
+    noProductFound: 'Товар не найден',
+    reviewsCount: 'отзывов',
+    averageRating: 'Рейтинг продавца',
+    buyNowBtn: 'Купить сейчас',
+    sellerInfoTitle: 'Информация о продавце',
+    productDescriptionTitle: 'Описание товара',
+    productCategoryTitle: 'Категория',
+    productStockTitle: 'Наличие на складе',
+    productQuantityTitle: 'Количество',
   },
   tg: {
     // Navigation / Header
@@ -462,6 +475,19 @@ const translations = {
     status_shipped: 'Дар роҳ',
     status_completed: 'Анҷомёфта',
     status_cancelled: 'Бекоршуда',
+
+    // Product Details
+    productDetailsTitle: 'Тафсилоти мол',
+    backToShop: 'Бозгашт ба мағоза',
+    noProductFound: 'Мол ёфт нашуд',
+    reviewsCount: 'тақризҳо',
+    averageRating: 'Рейтинги фурӯшанда',
+    buyNowBtn: 'Ҳозир харидан',
+    sellerInfoTitle: 'Маълумот дар бораи фурӯшанда',
+    productDescriptionTitle: 'Тавсифи мол',
+    productCategoryTitle: 'Категория',
+    productStockTitle: 'Миқдор дар анбор',
+    productQuantityTitle: 'Шумора',
   }
 };
 

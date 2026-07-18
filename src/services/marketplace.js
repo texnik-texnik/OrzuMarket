@@ -185,6 +185,33 @@ export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice
   return data ?? [];
 }
 
+export async function fetchProductById(productId) {
+  if (!isSupabaseConfigured) {
+    const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
+    const product = products.find((p) => p.id === productId);
+    if (!product) throw new Error('Товар не найден');
+    const users = readJson(DEMO_USERS_KEY, seedUsers);
+    const seller = users.find((u) => u.id === product.seller_id) ?? { full_name: 'Demo Seller', id: product.seller_id };
+    return {
+      ...product,
+      seller,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
+      seller:profiles!products_seller_id_fkey ( id, email, full_name )
+    `)
+    .eq('id', productId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Товар не найден');
+  return data;
+}
+
 export async function createOrdersFromCart({ buyerId, items }) {
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);

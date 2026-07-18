@@ -186,11 +186,17 @@ export function ShopPage() {
         ) : (
           products.map((product) => (
             <article className="product-card" key={product.id}>
-              <ProductImageWithFallback src={product.photo_url} alt={product.name} />
+              <Link to={`/product/${product.id}`} className="product-image-link" style={{ display: 'block', overflow: 'hidden' }}>
+                <ProductImageWithFallback src={product.photo_url} alt={product.name} />
+              </Link>
               <div className="product-body">
                 <div className="product-title-row">
-                  <h3>{product.name}</h3>
-                  <strong>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</strong>
+                  <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <h3 style={{ margin: 0 }}>{product.name}</h3>
+                  </Link>
+                  <strong style={{ whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                    {Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
+                  </strong>
                 </div>
                 <p>{product.description || t('noDescription')}</p>
                 <div style={{ marginBottom: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
