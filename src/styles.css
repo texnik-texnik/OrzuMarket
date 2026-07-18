@@ -2072,6 +2072,101 @@ tr:hover td {
   }
 }
 
+/* Wishlist styles */
+.product-image-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 200px;
+}
+
+.product-image-container .product-image {
+  height: 100%;
+}
+
+.wishlist-toggle-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.wishlist-toggle-btn:hover {
+  transform: scale(1.1) !important;
+  border-color: var(--danger);
+  background: var(--danger-light);
+}
+
+.wishlist-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-muted);
+  fill: transparent;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.wishlist-toggle-btn:hover svg {
+  stroke: var(--danger);
+}
+
+.wishlist-toggle-btn.active svg {
+  stroke: var(--danger);
+  fill: var(--danger);
+}
+
+/* Product Detail Heart Button */
+.product-detail-heart-btn {
+  height: 48px;
+  width: 48px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.product-detail-heart-btn:hover {
+  border-color: var(--danger);
+  background: var(--danger-light);
+  transform: scale(1.05) !important;
+}
+
+.product-detail-heart-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--text-muted);
+  fill: transparent;
+  transition: all 0.2s ease;
+}
+
+.product-detail-heart-btn:hover svg {
+  stroke: var(--danger);
+}
+
+.product-detail-heart-btn.active svg {
+  stroke: var(--danger);
+  fill: var(--danger);
+}
+
+
 
 
 

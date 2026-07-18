@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { useCart } from '../../cart/CartProvider';
+import { useWishlist } from '../../cart/WishlistProvider';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { LanguageSelector } from '../../components/LanguageSelector';
 
@@ -9,6 +10,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { isAuthenticated, profile, role, signOut } = useAuth();
   const { totalQuantity } = useCart();
+  const { wishlistCount } = useWishlist();
   const { t } = useTranslation();
 
   const [theme, setTheme] = useState(() => {
@@ -59,6 +61,7 @@ export function AppLayout() {
               {role === 'admin' && <NavLink to="/admin" end>{t('admin')}</NavLink>}
               {role === 'seller' && <NavLink to="/dashboard" end>{t('sellerDashboard')}</NavLink>}
               <NavLink to="/shop">{t('shop')}</NavLink>
+              <NavLink to="/wishlist">{t('wishlist')} ({wishlistCount})</NavLink>
               <NavLink to="/checkout">{t('cart')} ({totalQuantity})</NavLink>
               <NavLink to="/profile">{t('profile')}</NavLink>
               <button type="button" onClick={handleLogout} className="logout-btn">{t('logout')}</button>
@@ -92,6 +95,15 @@ export function AppLayout() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             <span>{t('shop')}</span>
+          </NavLink>
+          <NavLink to="/wishlist" className="bottom-nav-item">
+            <div className="cart-icon-wrapper">
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
+            </div>
+            <span>{t('wishlist')}</span>
           </NavLink>
           <NavLink to="/checkout" className="bottom-nav-item">
             <div className="cart-icon-wrapper">

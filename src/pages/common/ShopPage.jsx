@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useCart } from '../../cart/CartProvider';
+import { useWishlist } from '../../cart/WishlistProvider';
 import { fetchActiveProducts, PRODUCT_CATEGORIES } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { ProductCardSkeleton } from '../../components/SkeletonLoaders';
@@ -64,6 +65,7 @@ export function getCategoryIcon(cat) {
 
 export function ShopPage() {
   const { addItem, totalQuantity } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
   const [filters, setFilters] = useState({ search: '', minPrice: '', maxPrice: '', sort: 'created_at.desc', category: '' });
   const [loading, setLoading] = useState(true);
@@ -184,39 +186,54 @@ export function ShopPage() {
             <ProductCardSkeleton key={idx} />
           ))
         ) : (
-          products.map((product) => (
-            <article className="product-card" key={product.id}>
-              <Link to={`/product/${product.id}`} className="product-image-link" style={{ display: 'block', overflow: 'hidden' }}>
-                <ProductImageWithFallback src={product.photo_url} alt={product.name} />
-              </Link>
-              <div className="product-body">
-                <div className="product-title-row">
-                  <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <h3 style={{ margin: 0 }}>{product.name}</h3>
+          products.map((product) => {
+            const isFav = isInWishlist(product.id);
+            return (
+              <article className="product-card" key={product.id}>
+                <div className="product-image-container">
+                  <Link to={`/product/${product.id}`} className="product-image-link" style={{ display: 'block', height: '100%' }}>
+                    <ProductImageWithFallback src={product.photo_url} alt={product.name} />
                   </Link>
-                  <strong style={{ whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                    {Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
-                  </strong>
+                  <button
+                    type="button"
+                    className={`wishlist-toggle-btn ${isFav ? 'active' : ''}`}
+                    onClick={() => toggleWishlist(product)}
+                    aria-label="Toggle Wishlist"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </button>
                 </div>
-                <p>{product.description || t('noDescription')}</p>
-                <div style={{ marginBottom: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span className="text-muted">{t('seller')}:</span>
-                  <Link to={`/seller-shop/${product.seller_id}`} style={{ fontWeight: '600', color: 'var(--primary)', textDecoration: 'underline' }}>
-                    {product.seller?.full_name || product.seller?.email || t('seller')}
-                  </Link>
+                <div className="product-body">
+                  <div className="product-title-row">
+                    <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <h3 style={{ margin: 0 }}>{product.name}</h3>
+                    </Link>
+                    <strong style={{ whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                      {Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
+                    </strong>
+                  </div>
+                  <p>{product.description || t('noDescription')}</p>
+                  <div style={{ marginBottom: '12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="text-muted">{t('seller')}:</span>
+                    <Link to={`/seller-shop/${product.seller_id}`} style={{ fontWeight: '600', color: 'var(--primary)', textDecoration: 'underline' }}>
+                      {product.seller?.full_name || product.seller?.email || t('seller')}
+                    </Link>
+                  </div>
+                  <div className="product-meta-row">
+                    <span className="category-badge">
+                      {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
+                    </span>
+                    <div className="muted">{t('inStock')}: {product.stock}</div>
+                  </div>
+                  <button type="button" disabled={product.stock < 1} onClick={() => handleAdd(product)}>
+                    {addedId === product.id ? t('addedSuccess') : t('addToCart')}
+                  </button>
                 </div>
-                <div className="product-meta-row">
-                  <span className="category-badge">
-                    {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
-                  </span>
-                  <div className="muted">{t('inStock')}: {product.stock}</div>
-                </div>
-                <button type="button" disabled={product.stock < 1} onClick={() => handleAdd(product)}>
-                  {addedId === product.id ? t('addedSuccess') : t('addToCart')}
-                </button>
-              </div>
-            </article>
-          ))
+              </article>
+            );
+          })
         )}
       </div>
     </section>
