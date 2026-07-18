@@ -235,3 +235,25 @@ BEGIN
   END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ТАБЛИЦА ОТЗЫВОВ О ТОВАРАХ (PRODUCT_REVIEWS)
+CREATE TABLE IF NOT EXISTS public.product_reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
+  buyer_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  buyer_name TEXT NOT NULL,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
+  text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.product_reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Разрешить чтение отзывов о товарах всем пользователям"
+  ON public.product_reviews FOR SELECT USING (true);
+
+CREATE POLICY "Разрешить добавление отзывов авторизованным покупателям"
+  ON public.product_reviews FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated' AND 
+    buyer_id = auth.uid()
+  );

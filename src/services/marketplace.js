@@ -670,6 +670,83 @@ const seedReviews = [
   }
 ];
 
+const DEMO_PRODUCT_REVIEWS_KEY = 'orzu_demo_product_reviews_v1';
+
+const seedProductReviews = [
+  {
+    id: 'demo-p-review-1',
+    product_id: 'demo-product-1',
+    buyer_id: 'demo-buyer',
+    buyer_name: 'Алишер Содиқов',
+    rating: 5,
+    text: 'Отличный телефон! Очень шустрый и батарею держит долго.',
+    created_at: new Date(Date.now() - 43200000).toISOString(),
+  },
+  {
+    id: 'demo-p-review-2',
+    product_id: 'demo-product-1',
+    buyer_id: 'demo-buyer-2',
+    buyer_name: 'Мадина Воҳидова',
+    rating: 4,
+    text: 'Камера хорошая, но звук мог быть громче. В целом довольна.',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'demo-p-review-3',
+    product_id: 'demo-product-2',
+    buyer_id: 'demo-buyer',
+    buyer_name: 'Алишер Содиқов',
+    rating: 5,
+    text: 'Наушники супер, басы отличные. За эту цену идеальный выбор!',
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+  }
+];
+
+export async function fetchProductReviews(productId) {
+  if (!isSupabaseConfigured) {
+    const reviews = readJson(DEMO_PRODUCT_REVIEWS_KEY, seedProductReviews);
+    return reviews.filter((r) => r.product_id === productId);
+  }
+
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select('id, product_id, buyer_id, buyer_name, rating, text, created_at')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createProductReview({ productId, buyerId, buyerName, rating, text }) {
+  const newReview = {
+    id: isSupabaseConfigured ? undefined : crypto.randomUUID(),
+    product_id: productId,
+    buyer_id: buyerId,
+    buyer_name: buyerName,
+    rating: Number(rating),
+    text: text.trim(),
+    created_at: new Date().toISOString(),
+  };
+
+  try {
+    if (!isSupabaseConfigured) throw new Error('Demo mode');
+    const { data, error } = await supabase
+      .from('product_reviews')
+      .insert(newReview)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn('Supabase product_reviews insert failed, inserting to local demo product reviews.', err.message);
+    const reviews = readJson(DEMO_PRODUCT_REVIEWS_KEY, seedProductReviews);
+    const updated = [newReview, ...reviews];
+    writeJson(DEMO_PRODUCT_REVIEWS_KEY, updated);
+    return newReview;
+  }
+}
+
 export async function fetchSellerReviews(sellerId) {
   if (!isSupabaseConfigured) {
     const reviews = readJson(DEMO_REVIEWS_KEY, seedReviews);

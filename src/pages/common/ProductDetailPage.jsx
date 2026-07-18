@@ -1,32 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthProvider';
 import { useCart } from '../../cart/CartProvider';
 import { useWishlist } from '../../cart/WishlistProvider';
 import { useTranslation } from '../../localization/LanguageProvider';
-import { fetchProductById, fetchSellerProfile } from '../../services/marketplace';
+import {
+  fetchProductById,
+  fetchSellerProfile,
+  fetchProductReviews,
+  createProductReview
+} from '../../services/marketplace';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { getCategoryIcon } from './ShopPage';
 
 export function ProductDetailPage() {
   const { productId } = useParams();
+  const { user, profile: currentUserProfile, role } = useAuth();
   const { addItem } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { t, lang } = useTranslation();
 
   const [product, setProduct] = useState(null);
   const [seller, setSeller] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+
+  // Review Form States
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState('');
+  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       setError('');
       try {
-        const prodData = await fetchProductById(productId);
+        const [prodData, reviewsData] = await Promise.all([
+          fetchProductById(productId),
+          fetchProductReviews(productId)
+        ]);
         setProduct(prodData);
+        setReviews(reviewsData);
         
         // Also fetch enriched seller metrics (rating, review counts)
         if (prodData.seller_id) {
@@ -54,6 +73,43 @@ export function ProductDetailPage() {
     addItem(product, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+    setReviewSuccess('');
+
+    if (user.id === product.seller_id) {
+      setReviewError(t('errorOwnProductReview'));
+      return;
+    }
+
+    if (role !== 'buyer') {
+      setReviewError(t('errorOnlyBuyersReview') || 'Только покупатели могут оставлять отзывы');
+      return;
+    }
+
+    if (!reviewText.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const newReview = await createProductReview({
+        productId,
+        buyerId: user.id,
+        buyerName: currentUserProfile?.full_name || user.email,
+        rating,
+        text: reviewText
+      });
+      setReviewText('');
+      setRating(5);
+      setReviewSuccess(t('productReviewSuccess'));
+      setReviews((current) => [newReview, ...current]);
+    } catch (err) {
+      setReviewError(err.message ?? t('error'));
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading) {
@@ -86,6 +142,10 @@ export function ProductDetailPage() {
 
   const formattedPrice = Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU');
   const hasStock = product.stock > 0;
+
+  // Aggregate product rating
+  const totalProductRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const averageProductRating = reviews.length > 0 ? totalProductRating / reviews.length : 0;
 
   return (
     <div className="product-detail-layout">
@@ -123,6 +183,19 @@ export function ProductDetailPage() {
               </div>
             </div>
             <h1>{product.name}</h1>
+            
+            {/* Review Stars summary */}
+            {reviews.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-muted)' }}>
+                <span style={{ color: '#f59e0b', fontSize: '16px' }}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span key={i}>{i < Math.round(averageProductRating) ? '★' : '☆'}</span>
+                  ))}
+                </span>
+                <strong>{averageProductRating.toFixed(1)}</strong>
+                <span>({reviews.length} {t('reviewsCount')})</span>
+              </div>
+            )}
           </div>
 
           {/* Price */}
@@ -219,6 +292,123 @@ export function ProductDetailPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Product Reviews Section */}
+      <div className="card" style={{ marginTop: '24px', padding: '32px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 24px 0' }}>
+          {t('productReviewsTitle')} ({reviews.length})
+        </h2>
+
+        <div className="product-reviews-grid">
+          {/* Left Column: Review Form */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {role === 'buyer' && user?.id !== product.seller_id ? (
+              <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '700' }}>
+                  {t('addProductReviewTitle')}
+                </h3>
+
+                {/* Rating Selector */}
+                <div>
+                  <span style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    {t('ratingLabel')}
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '2px',
+                          cursor: 'pointer',
+                          boxShadow: 'none',
+                          color: star <= rating ? '#f59e0b' : '#d1d5db',
+                          fontSize: '24px',
+                          transform: 'none !important'
+                        }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Text Area */}
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('textLabel')}</span>
+                  <textarea
+                    rows="4"
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder={t('reviewPlaceholder') || 'Напишите ваш отзыв...'}
+                    required
+                    style={{ resize: 'vertical' }}
+                  />
+                </label>
+
+                {reviewSuccess && <p className="success-message" style={{ margin: '0', padding: '10px 14px' }}>{reviewSuccess}</p>}
+                {reviewError && <p className="error" style={{ margin: '0', padding: '10px 14px' }}>{reviewError}</p>}
+
+                <button type="submit" disabled={submittingReview} style={{ width: '100%', padding: '12px' }}>
+                  {submittingReview ? t('loading') : t('submitReview')}
+                </button>
+              </form>
+            ) : (
+              <p className="muted" style={{ fontSize: '14px', margin: '0' }}>
+                {user?.id === product.seller_id ? t('errorOwnProductReview') : t('errorOnlyBuyersReview') || 'Только покупатели могут оставлять отзывы'}
+              </p>
+            )}
+          </div>
+
+          {/* Right Column: Reviews List */}
+          <div>
+            {!reviews.length ? (
+              <p className="muted" style={{ padding: '24px 0', margin: '0', textAlign: 'center' }}>
+                {t('noProductReviewsYet')}
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    style={{
+                      borderBottom: '1px solid var(--border-color)',
+                      paddingBottom: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '15px' }}>{review.buyer_name}</strong>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {new Date(review.created_at).toLocaleDateString(lang === 'tg' ? 'tg-TJ' : 'ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    
+                    <div style={{ color: '#f59e0b', fontSize: '13px' }}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i}>{i < review.rating ? '★' : '☆'}</span>
+                      ))}
+                    </div>
+
+                    <p style={{ margin: '0', fontSize: '14px', lineHeight: '1.5', color: 'var(--text-primary)' }}>
+                      {review.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

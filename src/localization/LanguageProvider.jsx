@@ -248,6 +248,11 @@ const translations = {
     productCategoryTitle: 'Категория',
     productStockTitle: 'Наличие на складе',
     productQuantityTitle: 'Количество',
+    productReviewsTitle: 'Отзывы о товаре',
+    noProductReviewsYet: 'Отзывов о данном товаре пока нет. Будьте первым!',
+    addProductReviewTitle: 'Оценить товар',
+    productReviewSuccess: 'Отзыв успешно добавлен!',
+    errorOwnProductReview: 'Вы не можете оставить отзыв о собственном товаре',
   },
   tg: {
     // Navigation / Header
@@ -494,6 +499,11 @@ const translations = {
     productCategoryTitle: 'Категория',
     productStockTitle: 'Миқдор дар анбор',
     productQuantityTitle: 'Шумора',
+    productReviewsTitle: 'Тақризҳо дар бораи мол',
+    noProductReviewsYet: 'Дар бораи ин мол ҳанӯз тақризе нест. Аввалин шавед!',
+    addProductReviewTitle: 'Баҳодиҳии мол',
+    productReviewSuccess: 'Тақриз бомуваффақият илова карда шуд!',
+    errorOwnProductReview: 'Шумо наметавонед ба моли худ тақриз гузоред',
   }
 };
 
