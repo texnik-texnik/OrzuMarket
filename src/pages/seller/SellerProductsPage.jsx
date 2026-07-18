@@ -124,6 +124,7 @@ export function SellerProductsPage() {
                 <th>{t('tableHeaderPrice')}</th>
                 <th>{t('tableHeaderStock')}</th>
                 <th>{t('tableHeaderStatus')}</th>
+                <th>{t('tableHeaderModeration')}</th>
                 <th>{t('tableHeaderDescription')}</th>
                 <th>{t('tableHeaderAction')}</th>
               </tr>
@@ -131,29 +132,37 @@ export function SellerProductsPage() {
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRowSkeleton key={idx} columns={8} />
+                  <TableRowSkeleton key={idx} columns={9} />
                 ))
               ) : (
-                products.map((product) => (
-                  <tr key={product.id}>
-                    <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
-                    <td>{product.name}</td>
-                    <td>
-                      <span className="category-badge">
-                        {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
-                      </span>
-                    </td>
-                    <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
-                    <td>{product.stock}</td>
-                    <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
-                    <td>{product.description || '—'}</td>
-                    <td className="actions-cell">
-                      <button type="button" className="danger" disabled={updatingId === product.id} onClick={() => handleDelete(product)}>
-                        {t('deleteBtn')}
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                products.map((product) => {
+                  const modStatus = product.moderation_status || 'approved';
+                  return (
+                    <tr key={product.id} className={modStatus === 'rejected' ? 'row-muted' : ''}>
+                      <td className="table-image"><ProductImageWithFallback src={product.photo_url} alt={product.name} /></td>
+                      <td>{product.name}</td>
+                      <td>
+                        <span className="category-badge">
+                          {getCategoryIcon(product.category)} {t(`category_${product.category || 'other'}`)}
+                        </span>
+                      </td>
+                      <td>{Number(product.price).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
+                      <td>{product.stock}</td>
+                      <td>{product.is_active ? t('productStatusActive') : t('productStatusHidden')}</td>
+                      <td>
+                        <span className={`status-badge moderation-${modStatus}`}>
+                          {t(`moderation_status_${modStatus}`)}
+                        </span>
+                      </td>
+                      <td>{product.description || '—'}</td>
+                      <td className="actions-cell">
+                        <button type="button" className="danger" disabled={updatingId === product.id} onClick={() => handleDelete(product)}>
+                          {t('deleteBtn')}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -150,7 +150,7 @@ function sortDemoProducts(products, sort) {
 
 export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice = '', sort = 'created_at.desc', category = '' } = {}) {
   if (!isSupabaseConfigured) {
-    let products = readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.is_active);
+    let products = readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.is_active && (product.moderation_status === 'approved' || !product.moderation_status));
     if (search.trim()) products = products.filter((product) => product.name.toLowerCase().includes(search.trim().toLowerCase()));
     if (minPrice !== '') products = products.filter((product) => Number(product.price) >= Number(minPrice));
     if (maxPrice !== '') products = products.filter((product) => Number(product.price) <= Number(maxPrice));
@@ -164,25 +164,49 @@ export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice
     return sortDemoProducts(enriched, sort);
   }
 
-  let query = supabase
-    .from('products')
-    .select(`
-      id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
-      seller:profiles!products_seller_id_fkey ( id, email, full_name )
-    `)
-    .eq('is_active', true);
+  try {
+    let query = supabase
+      .from('products')
+      .select(`
+        id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category, moderation_status,
+        seller:profiles!products_seller_id_fkey ( id, email, full_name )
+      `)
+      .eq('is_active', true)
+      .eq('moderation_status', 'approved');
 
-  if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
-  if (minPrice !== '') query = query.gte('price', Number(minPrice));
-  if (maxPrice !== '') query = query.lte('price', Number(maxPrice));
-  if (category) query = query.eq('category', category);
+    if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
+    if (minPrice !== '') query = query.gte('price', Number(minPrice));
+    if (maxPrice !== '') query = query.lte('price', Number(maxPrice));
+    if (category) query = query.eq('category', category);
 
-  const [column, direction] = sort.split('.');
-  query = query.order(column, { ascending: direction !== 'desc' });
+    const [column, direction] = sort.split('.');
+    query = query.order(column, { ascending: direction !== 'desc' });
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data ?? [];
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.warn('fetchActiveProducts with moderation_status column failed. Retrying query without moderation check.', error.message);
+    let query = supabase
+      .from('products')
+      .select(`
+        id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
+        seller:profiles!products_seller_id_fkey ( id, email, full_name )
+      `)
+      .eq('is_active', true);
+
+    if (search.trim()) query = query.ilike('name', `%${search.trim()}%`);
+    if (minPrice !== '') query = query.gte('price', Number(minPrice));
+    if (maxPrice !== '') query = query.lte('price', Number(maxPrice));
+    if (category) query = query.eq('category', category);
+
+    const [column, direction] = sort.split('.');
+    query = query.order(column, { ascending: direction !== 'desc' });
+
+    const { data, error: retryError } = await query;
+    if (retryError) throw retryError;
+    return (data ?? []).map((p) => ({ ...p, moderation_status: 'approved' }));
+  }
 }
 
 export async function fetchProductById(productId) {
@@ -336,14 +360,26 @@ export async function fetchSellerProducts(sellerId) {
     return readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.seller_id === sellerId || sellerId === 'demo-seller');
   }
 
-  const { data, error } = await supabase
-    .from('products')
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
-    .eq('seller_id', sellerId)
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category, moderation_status')
+      .eq('seller_id', sellerId)
+      .order('created_at', { ascending: false });
 
-  if (error) throw error;
-  return data ?? [];
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.warn('fetchSellerProducts failed on moderation_status. Retrying without it.', error.message);
+    const { data, error: retryError } = await supabase
+      .from('products')
+      .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
+      .eq('seller_id', sellerId)
+      .order('created_at', { ascending: false });
+
+    if (retryError) throw retryError;
+    return (data ?? []).map((p) => ({ ...p, moderation_status: 'approved' }));
+  }
 }
 
 export async function createSellerProduct({ sellerId, name, price, description, photoFile, stock, category }) {
@@ -365,6 +401,7 @@ export async function createSellerProduct({ sellerId, name, price, description, 
       photo_url: photoUrl,
       stock: Number(stock) || 0,
       is_active: true,
+      moderation_status: 'pending',
       category,
       created_at: new Date().toISOString(),
     };
@@ -372,10 +409,36 @@ export async function createSellerProduct({ sellerId, name, price, description, 
     return product;
   }
 
-  // Attempt insert with category column
-  const { data, error } = await supabase
-    .from('products')
-    .insert({
+  // Attempt insert with category and moderation_status column
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        seller_id: sellerId,
+        name,
+        price: Number(price),
+        description,
+        photo_url: photoUrl,
+        stock: Number(stock) || 0,
+        is_active: true,
+        category,
+        moderation_status: 'pending',
+      })
+      .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category, moderation_status')
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    // Check if error is due to RLS policies
+    if (error.message && error.message.toLowerCase().includes('row-level security')) {
+      throw new Error('Ошибка прав доступа (RLS): Пожалуйста, отключите RLS для таблицы "products" в Supabase Console или добавьте политику разрешения вставки (INSERT) для продавцов.');
+    }
+    
+    // Check if moderation_status or category columns don't exist (self-healing retry)
+    console.warn('Column category or moderation_status might not exist in Supabase products table. Retrying insert with minimum columns.', error.message);
+    
+    const insertObj = {
       seller_id: sellerId,
       name,
       price: Number(price),
@@ -383,32 +446,17 @@ export async function createSellerProduct({ sellerId, name, price, description, 
       photo_url: photoUrl,
       stock: Number(stock) || 0,
       is_active: true,
-      category,
-    })
-    .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category')
-    .maybeSingle();
-
-  if (error) {
-    // Check if error is due to RLS policies
-    if (error.message && error.message.toLowerCase().includes('row-level security')) {
-      throw new Error('Ошибка прав доступа (RLS): Пожалуйста, отключите RLS для таблицы "products" в Supabase Console или добавьте политику разрешения вставки (INSERT) для продавцов.');
-    }
+    };
     
-    // Check if category column doesn't exist (self-healing retry)
-    if (error.message && (error.message.includes('category') || error.code === '42703')) {
-      console.warn('Column "category" does not exist in Supabase products table. Retrying insert without it.');
+    if (!error.message || !error.message.includes('category')) {
+      insertObj.category = category;
+    }
+
+    try {
       const { data: retryData, error: retryError } = await supabase
         .from('products')
-        .insert({
-          seller_id: sellerId,
-          name,
-          price: Number(price),
-          description,
-          photo_url: photoUrl,
-          stock: Number(stock) || 0,
-          is_active: true,
-        })
-        .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at')
+        .insert(insertObj)
+        .select(`id, seller_id, name, description, price, stock, is_active, photo_url, created_at${insertObj.category ? ', category' : ''}`)
         .maybeSingle();
 
       if (retryError) {
@@ -417,11 +465,15 @@ export async function createSellerProduct({ sellerId, name, price, description, 
         }
         throw retryError;
       }
-      return { ...retryData, category: '' };
+      return { 
+        ...retryData, 
+        category: retryData.category ?? '', 
+        moderation_status: 'approved' 
+      };
+    } catch (err) {
+      throw err;
     }
-    throw error;
   }
-  return data;
 }
 
 export async function fetchSellerOrders() {
@@ -602,16 +654,49 @@ export async function fetchAdminProducts() {
     }));
   }
 
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category, moderation_status,
+        seller:profiles!products_seller_id_fkey ( id, email, full_name )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.warn('fetchAdminProducts failed on moderation_status column. Retrying without it.', error.message);
+    const { data, error: retryError } = await supabase
+      .from('products')
+      .select(`
+        id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
+        seller:profiles!products_seller_id_fkey ( id, email, full_name )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (retryError) throw retryError;
+    return (data ?? []).map((p) => ({ ...p, moderation_status: 'approved' }));
+  }
+}
+
+export async function updateProductModeration(productId, moderationStatus) {
+  if (!isSupabaseConfigured) {
+    const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
+    const updated = products.map((p) => p.id === productId ? { ...p, moderation_status: moderationStatus } : p);
+    writeJson(DEMO_PRODUCTS_KEY, updated);
+    return { id: productId, moderation_status: moderationStatus };
+  }
+
   const { data, error } = await supabase
     .from('products')
-    .select(`
-      id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category,
-      seller:profiles!products_seller_id_fkey ( id, email, full_name )
-    `)
-    .order('created_at', { ascending: false });
+    .update({ moderation_status: moderationStatus })
+    .eq('id', productId)
+    .select('id, moderation_status')
+    .single();
 
   if (error) throw error;
-  return data ?? [];
+  return data;
 }
 
 export async function setProductActive(productId, isActive) {
