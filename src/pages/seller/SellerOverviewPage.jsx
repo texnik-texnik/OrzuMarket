@@ -14,6 +14,9 @@ export function SellerOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Dashboard detail tab state: 'orders' or 'products'
+  const [activeTab, setActiveTab] = useState('orders');
+
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -98,7 +101,30 @@ export function SellerOverviewPage() {
     return dynamics;
   };
 
+  // Get top selling products
+  const getTopProducts = () => {
+    const counts = {};
+    orders.forEach((order) => {
+      if (order.status === 'cancelled') return;
+      const pid = order.product_id;
+      if (!counts[pid]) {
+        counts[pid] = {
+          name: order.products?.name || pid,
+          quantity: 0,
+          revenue: 0,
+        };
+      }
+      counts[pid].quantity += order.quantity;
+      counts[pid].revenue += Number(order.total || 0);
+    });
+
+    return Object.values(counts)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5); // top 5
+  };
+
   const chartData = getSalesDynamics();
+  const topProducts = getTopProducts();
   const formatCurrency = (val) => {
     return Math.round(val).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU');
   };
@@ -188,28 +214,92 @@ export function SellerOverviewPage() {
 
       {/* Secondary Dashboard Grid */}
       <div className="dashboard-details-grid">
-        {/* Recent Orders List */}
-        <div className="dashboard-detail-block">
-          <h3>{t('recentOrders')}</h3>
-          {recentOrders.length === 0 ? (
-            <p className="muted" style={{ padding: '16px 0' }}>{t('noOrders')}</p>
+        {/* Tabbed view: Recent Orders / Top Products */}
+        <div className="dashboard-detail-block flex-col">
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '16px', gap: '16px', width: '100%' }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab('orders')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                padding: '8px 4px',
+                borderBottom: activeTab === 'orders' ? '2px solid var(--primary)' : 'none',
+                color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: '700',
+                cursor: 'pointer',
+                borderRadius: '0',
+                transform: 'none !important'
+              }}
+            >
+              {t('recentOrdersTab')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('products')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                padding: '8px 4px',
+                borderBottom: activeTab === 'products' ? '2px solid var(--primary)' : 'none',
+                color: activeTab === 'products' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: '700',
+                cursor: 'pointer',
+                borderRadius: '0',
+                transform: 'none !important'
+              }}
+            >
+              {t('topProductsTab')}
+            </button>
+          </div>
+
+          {activeTab === 'orders' ? (
+            recentOrders.length === 0 ? (
+              <p className="muted" style={{ padding: '16px 0' }}>{t('noOrders')}</p>
+            ) : (
+              <div className="dashboard-recent-orders-list" style={{ width: '100%' }}>
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="dashboard-recent-order-item">
+                    <div className="order-item-main">
+                      <strong>{order.products?.name ?? order.product_id}</strong>
+                      <span>{order.buyer?.email ?? order.buyer_id}</span>
+                    </div>
+                    <div className="order-item-meta">
+                      <strong className="order-price">
+                        {formatCurrency(order.total)} {t('currency')}
+                      </strong>
+                      <StatusBadge status={order.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
-            <div className="dashboard-recent-orders-list">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="dashboard-recent-order-item">
-                  <div className="order-item-main">
-                    <strong>{order.products?.name ?? order.product_id}</strong>
-                    <span>{order.buyer?.email ?? order.buyer_id}</span>
-                  </div>
-                  <div className="order-item-meta">
-                    <strong className="order-price">
-                      {formatCurrency(order.total)} {t('currency')}
-                    </strong>
-                    <StatusBadge status={order.status} />
-                  </div>
-                </div>
-              ))}
-            </div>
+            topProducts.length === 0 ? (
+              <p className="muted" style={{ padding: '16px 0', width: '100%' }}>{t('noSalesYet')}</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                {topProducts.map((p) => {
+                  const maxQty = Math.max(...topProducts.map(item => item.quantity));
+                  const percentage = maxQty > 0 ? (p.quantity / maxQty) * 100 : 0;
+                  return (
+                    <div key={p.name} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', fontSize: '13px' }}>
+                        <strong>{p.name}</strong>
+                        <span className="muted" style={{ fontSize: '12px' }}>
+                          {t('soldQtyLabel')}: <strong>{p.quantity}</strong> ({formatCurrency(p.revenue)} {t('currency')})
+                        </span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--primary)', borderRadius: '4px', transition: 'width 0.5s ease' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </div>
 
