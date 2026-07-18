@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { StatusBadge } from '../../components/StatusBadge';
+import { Modal } from '../../components/Modal';
 import { fetchMyOrders, updateUserProfile } from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 
@@ -19,6 +20,9 @@ export function ProfilePage() {
   const [photoFile, setPhotoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  // Order tracking states
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const handleLogout = async () => {
     await signOut();
@@ -78,6 +82,83 @@ export function ProfilePage() {
     loadOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const renderTrackingSteps = (status) => {
+    const steps = [
+      { key: 'new', label: t('orderStatusPlaced') },
+      { key: 'paid', label: t('orderStatusPaid') },
+      { key: 'processing', label: t('orderStatusProcessing') },
+      { key: 'shipped', label: t('orderStatusShipped') },
+      { key: 'completed', label: t('orderStatusCompleted') },
+    ];
+
+    if (status === 'cancelled') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '16px', background: 'var(--danger-light)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginTop: '16px' }}>
+          <span style={{ fontSize: '32px' }}>❌</span>
+          <strong>{t('orderStatusCancelled')}</strong>
+        </div>
+      );
+    }
+
+    const statusIndices = {
+      new: 0,
+      paid: 1,
+      processing: 2,
+      shipped: 3,
+      completed: 4
+    };
+
+    const currentIndex = statusIndices[status] ?? 0;
+
+    return (
+      <div className="tracking-stepper" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px', position: 'relative' }}>
+        {/* Draw a line connecting the dots */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '15px',
+            top: '16px',
+            bottom: '16px',
+            width: '2px',
+            background: 'var(--border-color)',
+            zIndex: 1
+          }}
+        />
+
+        {steps.map((step, idx) => {
+          const isDone = idx <= currentIndex;
+          const isCurrent = idx === currentIndex;
+          return (
+            <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 2 }}>
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: isDone ? 'var(--success)' : 'var(--bg-secondary)',
+                  color: isDone ? 'white' : 'var(--text-muted)',
+                  border: `2px solid ${isDone ? 'var(--success)' : 'var(--border-color)'}`,
+                  fontWeight: '800',
+                  fontSize: '14px',
+                  boxShadow: isCurrent ? '0 0 0 4px var(--success-light)' : 'none'
+                }}
+              >
+                {isDone ? '✓' : idx + 1}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <strong style={{ color: isDone ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '14px' }}>{step.label}</strong>
+                {isCurrent && <span style={{ fontSize: '11px', color: 'var(--success)', fontWeight: '700' }}>{t('currentStatus') || 'Текущий статус'}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <section className="profile-grid">
@@ -237,16 +318,35 @@ export function ProfilePage() {
                   <th>{t('orderTableHeaderAmount')}</th>
                   <th>{t('orderTableHeaderStatus')}</th>
                   <th>{t('orderTableHeaderDate')}</th>
+                  <th>{t('tableHeaderAction') || 'Действие'}</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
                   <tr key={order.id}>
-                    <td>{order.products?.name ?? order.product_id}</td>
+                    <td>
+                      {order.products ? (
+                        <Link to={`/product/${order.product_id}`} style={{ fontWeight: '600', color: 'var(--primary)', textDecoration: 'underline' }}>
+                          {order.products.name}
+                        </Link>
+                      ) : (
+                        order.product_id
+                      )}
+                    </td>
                     <td>{order.quantity}</td>
                     <td>{Number(order.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}</td>
                     <td><StatusBadge status={order.status} /></td>
-                    <td>{new Date(order.created_at).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')}</td>
+                    <td>{new Date(order.created_at).toLocaleDateString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="secondary"
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        {t('actionTrackOrder')}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -254,6 +354,36 @@ export function ProfilePage() {
           </div>
         )}
       </div>
+
+      {selectedOrder && (
+        <Modal title={t('orderDetailsTitle')} onClose={() => setSelectedOrder(null)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>ID:</span>
+              <code style={{ fontSize: '12px', display: 'block', wordBreak: 'break-all', marginTop: '2px' }}>{selectedOrder.id}</code>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '15px' }}>{selectedOrder.products?.name ?? selectedOrder.product_id}</strong>
+                <span className="muted" style={{ fontSize: '13px' }}>
+                  {t('productQuantityTitle') || 'Количество'}: {selectedOrder.quantity}
+                </span>
+              </div>
+              <strong style={{ fontSize: '16px' }}>
+                {Number(selectedOrder.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
+              </strong>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 12px 0' }}>
+                {t('orderTrackingTitle')}
+              </h3>
+              {renderTrackingSteps(selectedOrder.status)}
+            </div>
+          </div>
+        </Modal>
+      )}
     </section>
   );
 }
