@@ -13,6 +13,7 @@ export function AdminLayout() {
         <Link to="/admin">{t('adminOverview')}</Link>
         <Link to="/admin/users">{t('adminUsers')}</Link>
         <Link to="/admin/products">{t('adminProducts')}</Link>
+        <Link to="/admin/disputes">{t('adminDisputes')}</Link>
       </div>
       <Outlet />
     </section>

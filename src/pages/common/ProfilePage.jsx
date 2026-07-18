@@ -3,13 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Modal } from '../../components/Modal';
-import { fetchMyOrders, updateUserProfile } from '../../services/marketplace';
+import {
+  fetchMyOrders,
+  updateUserProfile,
+  fetchDisputes,
+  createDispute
+} from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 
 export function ProfilePage() {
   const { profile, user, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [disputes, setDisputes] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [error, setError] = useState('');
   const { t, lang } = useTranslation();
@@ -23,6 +29,12 @@ export function ProfilePage() {
 
   // Order tracking states
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('item_not_received');
+  const [disputeMessage, setDisputeMessage] = useState('');
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [disputeError, setDisputeError] = useState('');
+  const [disputeSuccess, setDisputeSuccess] = useState('');
 
   const handleLogout = async () => {
     await signOut();
@@ -66,22 +78,52 @@ export function ProfilePage() {
     }
   };
 
-  useEffect(() => {
-    async function loadOrders() {
-      setLoadingOrders(true);
-      setError('');
-      try {
-        setOrders(await fetchMyOrders());
-      } catch (err) {
-        setError(err.message ?? t('errorLoadOrders'));
-      } finally {
-        setLoadingOrders(false);
-      }
+  const loadData = async () => {
+    setLoadingOrders(true);
+    setError('');
+    try {
+      const [ordersData, disputesData] = await Promise.all([
+        fetchMyOrders(),
+        fetchDisputes({ buyerId: user.id })
+      ]);
+      setOrders(ordersData);
+      setDisputes(disputesData);
+    } catch (err) {
+      setError(err.message ?? t('errorLoadOrders'));
+    } finally {
+      setLoadingOrders(false);
     }
+  };
 
-    loadOrders();
+  useEffect(() => {
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user.id]);
+
+  const handleOpenDispute = async (e) => {
+    e.preventDefault();
+    if (!disputeMessage.trim()) return;
+
+    setSubmittingDispute(true);
+    setDisputeError('');
+    setDisputeSuccess('');
+    try {
+      const newDispute = await createDispute({
+        orderId: selectedOrder.id,
+        buyerId: user.id,
+        reason: disputeReason,
+        message: disputeMessage
+      });
+      setDisputeSuccess(t('disputeSuccessMessage') || 'Жалоба отправлена! Админ рассмотрит спор.');
+      setDisputes((current) => [newDispute, ...current]);
+      setDisputeMessage('');
+      setShowDisputeForm(false);
+    } catch (err) {
+      setDisputeError(err.message ?? t('error'));
+    } finally {
+      setSubmittingDispute(false);
+    }
+  };
 
   const renderTrackingSteps = (status) => {
     const steps = [
@@ -113,7 +155,6 @@ export function ProfilePage() {
 
     return (
       <div className="tracking-stepper" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px', position: 'relative' }}>
-        {/* Draw a line connecting the dots */}
         <div
           style={{
             position: 'absolute',
@@ -342,7 +383,13 @@ export function ProfilePage() {
                         type="button"
                         className="secondary"
                         style={{ padding: '6px 12px', fontSize: '12px' }}
-                        onClick={() => setSelectedOrder(order)}
+                        onClick={() => {
+                          setSelectedOrder(order);
+                          setShowDisputeForm(false);
+                          setDisputeMessage('');
+                          setDisputeError('');
+                          setDisputeSuccess('');
+                        }}
                       >
                         {t('actionTrackOrder')}
                       </button>
@@ -355,35 +402,113 @@ export function ProfilePage() {
         )}
       </div>
 
-      {selectedOrder && (
-        <Modal title={t('orderDetailsTitle')} onClose={() => setSelectedOrder(null)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>ID:</span>
-              <code style={{ fontSize: '12px', display: 'block', wordBreak: 'break-all', marginTop: '2px' }}>{selectedOrder.id}</code>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+      {selectedOrder && (() => {
+        const orderDispute = disputes.find((d) => d.order_id === selectedOrder.id);
+        return (
+          <Modal title={t('orderDetailsTitle')} onClose={() => setSelectedOrder(null)}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <strong style={{ display: 'block', fontSize: '15px' }}>{selectedOrder.products?.name ?? selectedOrder.product_id}</strong>
-                <span className="muted" style={{ fontSize: '13px' }}>
-                  {t('productQuantityTitle') || 'Количество'}: {selectedOrder.quantity}
-                </span>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>ID:</span>
+                <code style={{ fontSize: '12px', display: 'block', wordBreak: 'break-all', marginTop: '2px' }}>{selectedOrder.id}</code>
               </div>
-              <strong style={{ fontSize: '16px' }}>
-                {Number(selectedOrder.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
-              </strong>
-            </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '15px' }}>{selectedOrder.products?.name ?? selectedOrder.product_id}</strong>
+                  <span className="muted" style={{ fontSize: '13px' }}>
+                    {t('productQuantityTitle') || 'Количество'}: {selectedOrder.quantity}
+                  </span>
+                </div>
+                <strong style={{ fontSize: '16px' }}>
+                  {Number(selectedOrder.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
+                </strong>
+              </div>
 
-            <div>
-              <h3 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 12px 0' }}>
-                {t('orderTrackingTitle')}
-              </h3>
-              {renderTrackingSteps(selectedOrder.status)}
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 12px 0' }}>
+                  {t('orderTrackingTitle')}
+                </h3>
+                {renderTrackingSteps(selectedOrder.status)}
+              </div>
+
+              {/* Disputes Section inside order details */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
+                {orderDispute ? (
+                  <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.2)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '13px', color: 'var(--warning)' }}>⚠️ {t('disputeStatusLabel') || 'Спор открыт'}</strong>
+                      <span className={`status-badge moderation-${orderDispute.status === 'open' ? 'pending' : 'approved'}`} style={{ fontSize: '9px' }}>
+                        {orderDispute.status === 'open' ? t('moderation_status_pending') : t('status_completed') || 'Решен'}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <strong>{t('disputeReasonLabel') || 'Причина'}:</strong> {t(`dispute_reason_${orderDispute.reason}`) || orderDispute.reason}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '13px', fontStyle: 'italic' }}>"{orderDispute.message}"</p>
+                  </div>
+                ) : showDisputeForm ? (
+                  <form onSubmit={handleOpenDispute} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800' }}>
+                      {t('openDisputeTitle') || 'Открыть спор / Жалоба'}
+                    </h4>
+                    
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('disputeReasonLabel') || 'Причина'}</span>
+                      <select value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)} required>
+                        <option value="item_not_received">{t('dispute_reason_item_not_received') || 'Товар не получен'}</option>
+                        <option value="item_damaged">{t('dispute_reason_item_damaged') || 'Товар поврежден / брак'}</option>
+                        <option value="item_not_matching">{t('dispute_reason_item_not_matching') || 'Не соответствует описанию'}</option>
+                        <option value="other">{t('dispute_reason_other') || 'Другая причина'}</option>
+                      </select>
+                    </label>
+
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('textLabel') || 'Описание проблемы'}</span>
+                      <textarea
+                        rows="3"
+                        value={disputeMessage}
+                        onChange={(e) => setDisputeMessage(e.target.value)}
+                        placeholder={t('disputePlaceholder') || 'Опишите проблему подробно...'}
+                        required
+                      />
+                    </label>
+
+                    {disputeError && <p className="error" style={{ margin: 0, padding: '8px' }}>{disputeError}</p>}
+                    
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="submit" disabled={submittingDispute} style={{ flex: 1, padding: '10px' }}>
+                        {submittingDispute ? t('loading') : t('submitReview')}
+                      </button>
+                      <button type="button" className="secondary" onClick={() => setShowDisputeForm(false)} style={{ flex: 1, padding: '10px' }}>
+                        {t('cancelBtn')}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  selectedOrder.status !== 'cancelled' && (
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => setShowDisputeForm(true)}
+                      style={{
+                        width: '100%',
+                        background: 'transparent',
+                        color: 'var(--danger)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        boxShadow: 'none',
+                        padding: '10px'
+                      }}
+                    >
+                      ⚠️ {t('openDisputeBtn') || 'Открыть спор / Подать жалобу'}
+                    </button>
+                  )
+                )}
+                {disputeSuccess && <p className="success-message" style={{ marginTop: '8px', padding: '8px' }}>{disputeSuccess}</p>}
+              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
     </section>
   );
 }

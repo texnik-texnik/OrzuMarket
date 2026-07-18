@@ -19,6 +19,7 @@ import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { AdminDisputesPage } from './pages/admin/AdminDisputesPage';
 import { SellerLayout } from './pages/seller/SellerLayout';
 import { SellerOverviewPage } from './pages/seller/SellerOverviewPage';
 import { SellerProductsPage } from './pages/seller/SellerProductsPage';
@@ -43,6 +44,7 @@ export default function App() {
                       <Route index element={<AdminOverviewPage />} />
                       <Route path="users" element={<AdminUsersPage />} />
                       <Route path="products" element={<AdminProductsPage />} />
+                      <Route path="disputes" element={<AdminDisputesPage />} />
                     </Route>
                   </Route>
 

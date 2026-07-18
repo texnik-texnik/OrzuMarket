@@ -257,3 +257,41 @@ CREATE POLICY "Разрешить добавление отзывов автор
     auth.role() = 'authenticated' AND 
     buyer_id = auth.uid()
   );
+
+-- ТАБЛИЦА СПОРОВ И ЖАЛОБ (DISPUTES)
+CREATE TABLE IF NOT EXISTS public.disputes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE NOT NULL,
+  buyer_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  reason TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(50) DEFAULT 'open' CHECK (status IN ('open', 'resolved_buyer', 'resolved_seller', 'dismissed')),
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.disputes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Разрешить чтение споров участникам и админам"
+  ON public.disputes FOR SELECT USING (
+    auth.role() = 'authenticated' AND (
+      buyer_id = auth.uid() OR
+      EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE id = auth.uid() AND role = 'admin'
+      )
+    )
+  );
+
+CREATE POLICY "Разрешить создание споров покупателям"
+  ON public.disputes FOR INSERT WITH CHECK (
+    auth.role() = 'authenticated' AND 
+    buyer_id = auth.uid()
+  );
+
+CREATE POLICY "Разрешить админам обновление споров"
+  ON public.disputes FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
