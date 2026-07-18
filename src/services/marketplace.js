@@ -476,6 +476,92 @@ export async function createSellerProduct({ sellerId, name, price, description, 
   }
 }
 
+export async function updateSellerProduct(productId, { name, price, description, photoFile, stock, category, sellerId }) {
+  let photoUrl = undefined;
+  if (photoFile) {
+    try {
+      photoUrl = await uploadProductPhoto({ sellerId, photoFile });
+    } catch (err) {
+      throw new Error('Ошибка хранилища: ' + (err.message ?? err));
+    }
+  }
+
+  if (!isSupabaseConfigured) {
+    const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
+    const updated = products.map((product) => {
+      if (product.id === productId) {
+        return {
+          ...product,
+          name,
+          price: Number(price),
+          description,
+          photo_url: photoUrl !== undefined ? photoUrl : product.photo_url,
+          stock: Number(stock) || 0,
+          moderation_status: 'pending',
+          category: category || product.category,
+        };
+      }
+      return product;
+    });
+    writeJson(DEMO_PRODUCTS_KEY, updated);
+    return updated.find((p) => p.id === productId);
+  }
+
+  const updateFields = {
+    name,
+    price: Number(price),
+    description,
+    stock: Number(stock) || 0,
+    category,
+    moderation_status: 'pending',
+  };
+
+  if (photoUrl !== undefined) {
+    updateFields.photo_url = photoUrl;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updateFields)
+      .eq('id', productId)
+      .select('id, seller_id, name, description, price, stock, is_active, photo_url, created_at, category, moderation_status')
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.warn('updateSellerProduct failed with moderation_status/category. Retrying with minimal fields.', error.message);
+    const retryFields = {
+      name,
+      price: Number(price),
+      description,
+      stock: Number(stock) || 0,
+    };
+    if (photoUrl !== undefined) {
+      retryFields.photo_url = photoUrl;
+    }
+    
+    if (!error.message || !error.message.includes('category')) {
+      retryFields.category = category;
+    }
+
+    const { data: retryData, error: retryError } = await supabase
+      .from('products')
+      .update(retryFields)
+      .eq('id', productId)
+      .select(`id, seller_id, name, description, price, stock, is_active, photo_url, created_at${retryFields.category ? ', category' : ''}`)
+      .single();
+
+    if (retryError) throw retryError;
+    return {
+      ...retryData,
+      category: retryData.category ?? '',
+      moderation_status: 'approved',
+    };
+  }
+}
+
 export async function fetchSellerOrders() {
   if (!isSupabaseConfigured) return readJson(DEMO_ORDERS_KEY, []);
 

@@ -231,6 +231,10 @@ const translations = {
     createBtn: 'Создать',
     creatingBtn: 'Загружаем...',
     errorCreateProduct: 'Не удалось создать товар',
+    editBtn: 'Редактировать',
+    editProductModalTitle: 'Редактировать товар',
+    saveBtn: 'Сохранить',
+    savingBtn: 'Сохранение...',
     errorImageOnly: 'Можно загрузить только изображение.',
     errorImageSize: 'Фото слишком большое. Максимум 5 MB.',
 
@@ -488,6 +492,10 @@ const translations = {
     createBtn: 'Эҷод кардан',
     creatingBtn: 'Боргирӣ...',
     errorCreateProduct: 'Эҷоди мол ноком шуд',
+    editBtn: 'Таҳрир кардан',
+    editProductModalTitle: 'Таҳрири мол',
+    saveBtn: 'Захира кардан',
+    savingBtn: 'Захира кунӣ...',
     errorImageOnly: 'Танҳо файлҳои суратро боргирӣ кардан мумкин аст.',
     errorImageSize: 'Сурат хеле калон аст. Ҳадди аксар 5 MB.',
 

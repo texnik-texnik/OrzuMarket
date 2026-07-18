@@ -2,7 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal';
 import { ProductImageWithFallback } from '../../components/ProductImage';
 import { useAuth } from '../../auth/AuthProvider';
-import { createSellerProduct, fetchSellerProducts, deleteProduct, PRODUCT_CATEGORIES } from '../../services/marketplace';
+import {
+  createSellerProduct,
+  fetchSellerProducts,
+  deleteProduct,
+  updateSellerProduct,
+  PRODUCT_CATEGORIES
+} from '../../services/marketplace';
 import { useTranslation } from '../../localization/LanguageProvider';
 import { TableRowSkeleton } from '../../components/SkeletonLoaders';
 import { getCategoryIcon } from '../common/ShopPage';
@@ -15,10 +21,24 @@ export function SellerProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const { t, lang } = useTranslation();
+
+  const handleEditClick = (product) => {
+    setEditingProduct(product);
+    setForm({
+      name: product.name,
+      price: product.price.toString(),
+      description: product.description || '',
+      photoFile: null,
+      stock: product.stock,
+      category: product.category || '',
+    });
+    setModalOpen(true);
+  };
 
   const handleDelete = async (product) => {
     const ok = window.confirm(t('deleteConfirm', { name: product.name }) || `Удалить товар "${product.name}"?`);
@@ -37,9 +57,14 @@ export function SellerProductsPage() {
   };
 
   const photoPreview = useMemo(() => {
-    if (!form.photoFile) return '';
-    return URL.createObjectURL(form.photoFile);
-  }, [form.photoFile]);
+    if (form.photoFile) {
+      return URL.createObjectURL(form.photoFile);
+    }
+    if (editingProduct?.photo_url) {
+      return editingProduct.photo_url;
+    }
+    return '';
+  }, [form.photoFile, editingProduct]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -59,8 +84,10 @@ export function SellerProductsPage() {
   }, []);
 
   useEffect(() => () => {
-    if (photoPreview) URL.revokeObjectURL(photoPreview);
-  }, [photoPreview]);
+    if (form.photoFile && photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+  }, [form.photoFile, photoPreview]);
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0] ?? null;
@@ -84,6 +111,7 @@ export function SellerProductsPage() {
   const closeModal = () => {
     setModalOpen(false);
     setForm(initialForm);
+    setEditingProduct(null);
   };
 
   const handleSubmit = async (event) => {
@@ -92,11 +120,16 @@ export function SellerProductsPage() {
     setError('');
 
     try {
-      const product = await createSellerProduct({ sellerId: user.id, ...form });
-      setProducts((current) => [product, ...current]);
+      if (editingProduct) {
+        const product = await updateSellerProduct(editingProduct.id, { sellerId: user.id, ...form });
+        setProducts((current) => current.map((item) => item.id === editingProduct.id ? product : item));
+      } else {
+        const product = await createSellerProduct({ sellerId: user.id, ...form });
+        setProducts((current) => [product, ...current]);
+      }
       closeModal();
     } catch (err) {
-      setError(err.message ?? t('errorCreateProduct'));
+      setError(err.message ?? (editingProduct ? t('errorUpdateProduct') : t('errorCreateProduct')));
     } finally {
       setSubmitting(false);
     }
@@ -156,6 +189,9 @@ export function SellerProductsPage() {
                       </td>
                       <td>{product.description || '—'}</td>
                       <td className="actions-cell">
+                        <button type="button" className="secondary" disabled={updatingId === product.id} onClick={() => handleEditClick(product)}>
+                          {t('editBtn')}
+                        </button>
                         <button type="button" className="danger" disabled={updatingId === product.id} onClick={() => handleDelete(product)}>
                           {t('deleteBtn')}
                         </button>
@@ -170,7 +206,7 @@ export function SellerProductsPage() {
       )}
 
       {modalOpen && (
-        <Modal title={t('addProductModalTitle')} onClose={closeModal}>
+        <Modal title={editingProduct ? t('editProductModalTitle') : t('addProductModalTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit}>
             <label>
               {t('fieldName')}
@@ -183,7 +219,7 @@ export function SellerProductsPage() {
                 onChange={(event) => setForm((value) => ({ ...value, category: event.target.value }))}
                 required
               >
-                <option value="" disabled>{t('categorySelect')}</option>
+                <option value="" disabled>{t('categorySelect') || 'Выберите категорию'}</option>
                 {PRODUCT_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
                     {getCategoryIcon(cat)} {t(`category_${cat}`)}
@@ -216,7 +252,9 @@ export function SellerProductsPage() {
             )}
 
             {error && <p className="error" style={{ margin: '14px 0', padding: '10px 14px' }}>{error}</p>}
-            <button type="submit" disabled={submitting}>{submitting ? t('creatingBtn') : t('createBtn')}</button>
+            <button type="submit" disabled={submitting}>
+              {submitting ? (editingProduct ? t('savingBtn') : t('creatingBtn')) : (editingProduct ? t('saveBtn') : t('createBtn'))}
+            </button>
           </form>
         </Modal>
       )}
