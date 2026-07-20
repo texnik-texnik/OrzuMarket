@@ -265,6 +265,17 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
+  const resetPasswordForEmail = async (email) => {
+    if (!isSupabaseConfigured) {
+      return { success: true };
+    }
+
+    const redirectTo = `${window.location.origin}/login`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+    return { success: true };
+  };
+
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
@@ -276,6 +287,7 @@ export function AuthProvider({ children }) {
     signInWithPassword,
     signUp,
     signOut,
+    resetPasswordForEmail,
     refreshProfile: () => loadProfile(session?.user?.id, session?.user?.email),
   }), [session, profile, loading, profileLoading, loadProfile, signUp]);
 

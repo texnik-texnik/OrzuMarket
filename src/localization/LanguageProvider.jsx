@@ -310,6 +310,14 @@ const translations = {
     resolved_buyer_label: 'Возврат покупателю',
     resolved_seller_label: 'Выплата продавцу',
     dismissed_label: 'Спор отклонен',
+
+    // Reset Password
+    forgotPasswordLink: 'Забыли пароль?',
+    resetPasswordTitle: 'Восстановление пароля',
+    resetPasswordSub: 'Введите ваш Email, и мы отправим ссылку для сброса пароля.',
+    sendResetLinkBtn: 'Отправить ссылку',
+    sendingResetLink: 'Отправляем...',
+    resetEmailSentSuccess: 'Ссылка для сброса пароля отправлена на ваш Email! Пожалуйста, проверьте почту.',
   },
   tg: {
     // Navigation / Header
@@ -618,6 +626,14 @@ const translations = {
     resolved_buyer_label: 'Бозгашти маблағ ба харидор',
     resolved_seller_label: 'Пардохт ба фурӯшанда',
     dismissed_label: 'Баҳс рад шуд',
+
+    // Reset Password
+    forgotPasswordLink: 'Паролро фаромӯш кардед?',
+    resetPasswordTitle: 'Барқароркунии парол',
+    resetPasswordSub: 'Email-и худро ворид кунед ва мо истиноди барқароркуниро мефиристем.',
+    sendResetLinkBtn: 'Фиристодани истинод',
+    sendingResetLink: 'Фиристода истодаем...',
+    resetEmailSentSuccess: 'Истиноди барқароркунӣ ба email-и шумо фиристода шуд! Лутфан почтаро тафтиш кунед.',
   }
 };
 

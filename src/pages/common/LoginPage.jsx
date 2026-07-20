@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { getDefaultPathByRole } from '../../routes/roleRedirect';
 import { useTranslation } from '../../localization/LanguageProvider';
+import { Modal } from '../../components/Modal';
 
 const validatePassword = (pwd) => {
   if (pwd.length < 8) return false;
@@ -14,7 +15,7 @@ const validatePassword = (pwd) => {
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, role, profile, loading, isDemoMode, signInWithPassword, signUp } = useAuth();
+  const { isAuthenticated, role, profile, loading, isDemoMode, signInWithPassword, signUp, resetPasswordForEmail } = useAuth();
   const { t } = useTranslation();
 
   const [isRegister, setIsRegister] = useState(false);
@@ -26,6 +27,13 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Forgot Password modal state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
 
   if (loading) return <div className="screen-center">{t('loading')}</div>;
 
@@ -83,6 +91,23 @@ export function LoginPage() {
       setError(err.message ?? t('error'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (event) => {
+    event.preventDefault();
+    setResetError('');
+    setResetSuccessMessage('');
+    setResetSubmitting(true);
+
+    try {
+      await resetPasswordForEmail(resetEmail);
+      setResetSuccessMessage(t('resetEmailSentSuccess'));
+      setResetEmail('');
+    } catch (err) {
+      setResetError(err.message ?? t('error'));
+    } finally {
+      setResetSubmitting(false);
     }
   };
 
@@ -183,7 +208,24 @@ export function LoginPage() {
         </label>
 
         <label>
-          {t('passwordLabel')}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{t('passwordLabel')}</span>
+            {!isRegister && (
+              <button
+                type="button"
+                className="button-link"
+                style={{ fontSize: '12px', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                onClick={() => {
+                  setResetEmail(email);
+                  setResetError('');
+                  setResetSuccessMessage('');
+                  setShowResetModal(true);
+                }}
+              >
+                {t('forgotPasswordLink')}
+              </button>
+            )}
+          </div>
           <input
             type="password"
             value={password}
@@ -224,6 +266,51 @@ export function LoginPage() {
           {submitting ? (isRegister ? t('registering') : t('loggingIn')) : (isRegister ? t('registerBtn') : t('loginBtn'))}
         </button>
       </form>
+
+      {/* Forgot Password Modal */}
+      {showResetModal && (
+        <Modal onClose={() => setShowResetModal(false)}>
+          <h3>{t('resetPasswordTitle')}</h3>
+          <p className="muted" style={{ marginBottom: '16px', fontSize: '14px' }}>
+            {t('resetPasswordSub')}
+          </p>
+
+          {resetSuccessMessage ? (
+            <div>
+              <div className="success-message" style={{ marginBottom: '16px' }}>
+                {resetSuccessMessage}
+              </div>
+              <button type="button" onClick={() => setShowResetModal(false)}>
+                OK
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleResetPassword}>
+              <label style={{ marginBottom: '16px' }}>
+                {t('emailLabel')}
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder={t('emailPlaceholderLogin')}
+                  required
+                />
+              </label>
+
+              {resetError && <p className="error" style={{ marginBottom: '16px' }}>{resetError}</p>}
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" className="secondary" onClick={() => setShowResetModal(false)}>
+                  {t('cancelBtn')}
+                </button>
+                <button type="submit" disabled={resetSubmitting}>
+                  {resetSubmitting ? t('sendingResetLink') : t('sendResetLinkBtn')}
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal>
+      )}
     </section>
   );
 }
