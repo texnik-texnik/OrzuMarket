@@ -30,10 +30,10 @@ export function AdminDisputesPage() {
   const handleResolve = async (dispute, resolution) => {
     const confirmMsg =
       resolution === 'resolved_buyer'
-        ? 'Отменить заказ и вернуть средства покупателю?'
+        ? (t('confirmRefundBuyer') || 'Отменить заказ и вернуть средства покупателю?')
         : resolution === 'resolved_seller'
-        ? 'Завершить заказ и перевести средства продавцу?'
-        : 'Отклонить жалобу и оставить заказ как есть?';
+        ? (t('confirmPaySeller') || 'Завершить заказ и перевести средства продавцу?')
+        : (t('confirmDismissDispute') || 'Отклонить жалобу и оставить заказ как есть?');
 
     const ok = window.confirm(confirmMsg);
     if (!ok) return;
@@ -55,13 +55,13 @@ export function AdminDisputesPage() {
   const getDisputeStatusLabel = (status) => {
     switch (status) {
       case 'open':
-        return <span className="status-badge moderation-pending">{t('moderation_status_pending') || 'На рассмотрении'}</span>;
+        return <span className="status-badge moderation-pending">{t('moderation_status_pending')}</span>;
       case 'resolved_buyer':
-        return <span className="status-badge moderation-rejected">{t('resolved_buyer_label') || 'В пользу покупателя'}</span>;
+        return <span className="status-badge moderation-rejected">{t('resolved_buyer_label')}</span>;
       case 'resolved_seller':
-        return <span className="status-badge moderation-approved">{t('resolved_seller_label') || 'В пользу продавца'}</span>;
+        return <span className="status-badge moderation-approved">{t('resolved_seller_label')}</span>;
       case 'dismissed':
-        return <span className="status-badge" style={{ background: 'var(--border-color)', color: 'var(--text-muted)' }}>{t('dismissed_label') || 'Отклонен'}</span>;
+        return <span className="status-badge" style={{ background: 'var(--border-color)', color: 'var(--text-muted)' }}>{t('dismissed_label')}</span>;
       default:
         return status;
     }
@@ -76,20 +76,20 @@ export function AdminDisputesPage() {
 
       {error && <p className="error">{error}</p>}
 
-      {!loading && !disputes.length && <p className="muted">{t('noDisputes') || 'Жалоб и споров нет.'}</p>}
+      {!loading && !disputes.length && <p className="muted">{t('noDisputes')}</p>}
 
       {(loading || !!disputes.length) && (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Дата</th>
-                <th>Покупатель / Продавец</th>
-                <th>Товар / Сумма</th>
-                <th>Причина жалобы</th>
-                <th>Описание проблемы</th>
-                <th>Статус</th>
-                <th>Решение арбитража</th>
+                <th>{t('orderTableHeaderDate')}</th>
+                <th>{t('tableHeaderBuyerSeller') || 'Покупатель / Продавец'}</th>
+                <th>{t('tableHeaderProductAmount') || 'Товар / Сумма'}</th>
+                <th>{t('disputeReasonLabel')}</th>
+                <th>{t('tableHeaderProblemDescription') || 'Описание проблемы'}</th>
+                <th>{t('orderTableHeaderStatus')}</th>
+                <th>{t('tableHeaderArbitrationResolution') || 'Решение арбитража'}</th>
               </tr>
             </thead>
             <tbody>
@@ -112,7 +112,7 @@ export function AdminDisputesPage() {
                       <td style={{ fontSize: '13px' }}>
                         <strong>{order.products?.name ?? order.product_id}</strong>
                         <div className="muted" style={{ fontSize: '11px', marginTop: '2px' }}>
-                          {order.quantity} шт. · {Number(order.total).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
+                          {order.quantity} {t('qtyUnit') || 'шт.'} · {Number(order.total || 0).toLocaleString(lang === 'tg' ? 'tg-TJ' : 'ru-RU')} {t('currency')}
                         </div>
                       </td>
                       <td style={{ fontWeight: '600', fontSize: '13px' }}>
@@ -132,7 +132,7 @@ export function AdminDisputesPage() {
                               disabled={updatingId === dispute.id}
                               onClick={() => handleResolve(dispute, 'resolved_buyer')}
                             >
-                              Отменить и вернуть
+                              {t('resolved_buyer_label')}
                             </button>
                             <button
                               type="button"
@@ -141,7 +141,7 @@ export function AdminDisputesPage() {
                               disabled={updatingId === dispute.id}
                               onClick={() => handleResolve(dispute, 'resolved_seller')}
                             >
-                              Выплатить продавцу
+                              {t('resolved_seller_label')}
                             </button>
                             <button
                               type="button"
@@ -150,11 +150,11 @@ export function AdminDisputesPage() {
                               disabled={updatingId === dispute.id}
                               onClick={() => handleResolve(dispute, 'dismissed')}
                             >
-                              Отклонить
+                              {t('dismissed_label')}
                             </button>
                           </div>
                         ) : (
-                          <span className="muted" style={{ fontSize: '12px' }}>Жалоба закрыта</span>
+                          <span className="muted" style={{ fontSize: '12px' }}>{t('disputeClosed') || 'Жалоба закрыта'}</span>
                         )}
                       </td>
                     </tr>

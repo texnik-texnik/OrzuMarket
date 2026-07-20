@@ -91,12 +91,19 @@ export function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  const hasFilters = useMemo(() => Object.values(filters).some(Boolean), [filters]);
+  const hasFilters = useMemo(() => {
+    return Boolean(filters.search.trim() || filters.minPrice || filters.maxPrice || filters.category || (filters.sort && filters.sort !== 'created_at.desc'));
+  }, [filters]);
+
+  useEffect(() => {
+    if (!addedId) return;
+    const timer = setTimeout(() => setAddedId(null), 1200);
+    return () => clearTimeout(timer);
+  }, [addedId]);
 
   const handleAdd = (product) => {
     addItem(product, 1);
     setAddedId(product.id);
-    setTimeout(() => setAddedId(null), 1200);
   };
 
   return (

@@ -29,7 +29,7 @@ export function SellerOverviewPage() {
         
         // Filter orders for the current seller
         const filteredOrders = fetchedOrders.filter(
-          (o) => o.seller_id === user.id || o.seller_id === 'demo-seller'
+          (o) => o.seller_id === user.id || (isDemoMode && o.seller_id === 'demo-seller')
         );
 
         setOrders(filteredOrders);

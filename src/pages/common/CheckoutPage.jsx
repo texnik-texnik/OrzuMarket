@@ -112,7 +112,7 @@ export function CheckoutPage() {
           className="secondary"
           onClick={() => (step === 2 ? setStep(1) : navigate('/shop'))}
         >
-          {step === 2 ? '⬅ ' + t('backToShop') : t('backToShop')}
+          {step === 2 ? '⬅ ' + (t('cart') || 'Корзина') : t('backToShop')}
         </button>
       </div>
 
@@ -211,7 +211,7 @@ export function CheckoutPage() {
                   value="card"
                   checked={paymentMethod === 'card'}
                   onChange={() => setPaymentMethod('card')}
-                  style={{ display: 'none' }}
+                  className="visually-hidden"
                 />
                 <span style={{ fontSize: '24px' }}>💳</span>
                 <strong style={{ fontSize: '13px', color: paymentMethod === 'card' ? 'var(--primary)' : 'inherit' }}>
@@ -240,7 +240,7 @@ export function CheckoutPage() {
                   value="wallet"
                   checked={paymentMethod === 'wallet'}
                   onChange={() => setPaymentMethod('wallet')}
-                  style={{ display: 'none' }}
+                  className="visually-hidden"
                 />
                 <span style={{ fontSize: '24px' }}>📱</span>
                 <strong style={{ fontSize: '13px', color: paymentMethod === 'wallet' ? 'var(--primary)' : 'inherit' }}>

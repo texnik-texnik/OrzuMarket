@@ -290,6 +290,26 @@ const translations = {
     orderStatusCancelled: 'Заказ отменен',
     orderTrackingTitle: 'Отслеживание доставки',
     actionTrackOrder: 'Отследить',
+
+    // Missing keys
+    error: 'Произошла ошибка',
+    outOfStock: 'Нет в наличии',
+    sellerProfileLink: 'Перейти к продавцу',
+    currentStatus: 'Текущий статус',
+    disputeSuccessMessage: 'Жалоба успешно отправлена',
+    disputeStatusLabel: 'Спор открыт',
+    disputeReasonLabel: 'Причина обращения',
+    dispute_reason_item_not_received: 'Товар не получен',
+    dispute_reason_item_damaged: 'Товар поврежден / неисправен',
+    dispute_reason_item_not_matching: 'Товар не соответствует описанию',
+    dispute_reason_other: 'Другое',
+    disputePlaceholder: 'Опишите суть претензии...',
+    openDisputeTitle: 'Открыть спор по заказу',
+    openDisputeBtn: 'Открыть спор',
+    noDisputes: 'Нет активных споров',
+    resolved_buyer_label: 'Возврат покупателю',
+    resolved_seller_label: 'Выплата продавцу',
+    dismissed_label: 'Спор отклонен',
   },
   tg: {
     // Navigation / Header
@@ -578,6 +598,26 @@ const translations = {
     orderStatusCancelled: 'Фармоиш бекор шуд',
     orderTrackingTitle: 'Назорати расонидан',
     actionTrackOrder: 'Назорат кардан',
+
+    // Missing keys
+    error: 'Хатогӣ рӯй дод',
+    outOfStock: 'Дар анбор нест',
+    sellerProfileLink: 'Гузаштан ба фурӯшанда',
+    currentStatus: 'Ҳолати ҷорӣ',
+    disputeSuccessMessage: 'Шикоят бомуваффақият фиристода шуд',
+    disputeStatusLabel: 'Баҳс кушода шуд',
+    disputeReasonLabel: 'Сабаби муроҷиат',
+    dispute_reason_item_not_received: 'Мол дастрас нашуд',
+    dispute_reason_item_damaged: 'Мол зарар дидааст',
+    dispute_reason_item_not_matching: 'Мол ба тавсиф мувофиқат намекунад',
+    dispute_reason_other: 'Дигар',
+    disputePlaceholder: 'Мазмуни шикоятро нависед...',
+    openDisputeTitle: 'Кушодани баҳси фармоиш',
+    openDisputeBtn: 'Кушодани баҳс',
+    noDisputes: 'Баҳсҳои фаъол нестанд',
+    resolved_buyer_label: 'Бозгашти маблағ ба харидор',
+    resolved_seller_label: 'Пардохт ба фурӯшанда',
+    dismissed_label: 'Баҳс рад шуд',
   }
 };
 
@@ -601,9 +641,10 @@ export function LanguageProvider({ children }) {
     const translationSet = translations[lang] || translations['ru'];
     let text = translationSet[key] || translations['ru'][key] || key;
     
-    // Replace placeholders like {name}
+    // Replace placeholders like {name} safely
     Object.keys(replacements).forEach((k) => {
-      text = text.replace(new RegExp(`{${k}}`, 'g'), replacements[k]);
+      const escapedKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      text = text.replace(new RegExp(`{${escapedKey}}`, 'g'), replacements[k]);
     });
     
     return text;

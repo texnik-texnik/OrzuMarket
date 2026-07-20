@@ -179,6 +179,21 @@ CREATE POLICY "Администраторы могут удалять отзыв
   );
 
 -- ---------------------------------------------------------------------
+-- 4. ИНДЕКСЫ ДЛЯ ОПТИМИЗАЦИИ ПРОИЗВОДИТЕЛЬНОСТИ
+-- ---------------------------------------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_orders_buyer_id ON public.orders(buyer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_seller_id ON public.orders(seller_id);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_products_seller_id ON public.products(seller_id);
+CREATE INDEX IF NOT EXISTS idx_products_is_active ON public.products(is_active);
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
+CREATE INDEX IF NOT EXISTS idx_seller_reviews_seller_id ON public.seller_reviews(seller_id);
+CREATE INDEX IF NOT EXISTS idx_product_reviews_product_id ON public.product_reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_disputes_order_id ON public.disputes(order_id);
+CREATE INDEX IF NOT EXISTS idx_disputes_buyer_id ON public.disputes(buyer_id);
+
+-- ---------------------------------------------------------------------
 -- 3. БЕЗОПАСНАЯ ТРАНЗАКЦИОННАЯ СДЕЛКА (CHECKOUT RPC FUNCTION)
 -- ---------------------------------------------------------------------
 -- Эта функция выполняет проверку цен, списание остатков товара и создание заказов
@@ -199,19 +214,31 @@ DECLARE
   item RECORD;
   v_price NUMERIC;
   v_stock INT;
+  v_is_active BOOLEAN;
   v_seller_id UUID;
   v_order_id UUID;
+  v_is_blocked BOOLEAN;
 BEGIN
+  -- Проверяем, не заблокирован ли покупатель
+  SELECT is_blocked INTO v_is_blocked FROM public.profiles WHERE id = p_buyer_id;
+  IF v_is_blocked THEN
+    RAISE EXCEPTION 'Аккаунт покупателя заблокирован';
+  END IF;
+
   -- Цикл по всем позициям в заказе
   FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(id UUID, quantity INT) LOOP
     -- Блокируем строку товара для предотвращения Race Condition (запрещает параллельное чтение и изменение)
-    SELECT price, stock, seller_id INTO v_price, v_stock, v_seller_id
+    SELECT price, stock, is_active, seller_id INTO v_price, v_stock, v_is_active, v_seller_id
     FROM public.products
     WHERE public.products.id = item.id
     FOR UPDATE;
     
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Товар с ID % не найден в базе данных', item.id;
+    END IF;
+
+    IF NOT v_is_active THEN
+      RAISE EXCEPTION 'Товар с ID % снят с продажи', item.id;
     END IF;
     
     -- Проверяем остаток
@@ -255,7 +282,13 @@ CREATE POLICY "Разрешить чтение отзывов о товарах 
 CREATE POLICY "Разрешить добавление отзывов авторизованным покупателям"
   ON public.product_reviews FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
-    buyer_id = auth.uid()
+    buyer_id = auth.uid() AND
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'buyer' AND is_blocked = false)
+  );
+
+CREATE POLICY "Администраторы могут удалять отзывы о товарах"
+  ON public.product_reviews FOR DELETE USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
 -- ТАБЛИЦА СПОРОВ И ЖАЛОБ (DISPUTES)
@@ -276,6 +309,9 @@ CREATE POLICY "Разрешить чтение споров участникам
     auth.role() = 'authenticated' AND (
       buyer_id = auth.uid() OR
       EXISTS (
+        SELECT 1 FROM public.orders WHERE orders.id = disputes.order_id AND orders.seller_id = auth.uid()
+      ) OR
+      EXISTS (
         SELECT 1 FROM public.profiles 
         WHERE id = auth.uid() AND role = 'admin'
       )
@@ -285,7 +321,8 @@ CREATE POLICY "Разрешить чтение споров участникам
 CREATE POLICY "Разрешить создание споров покупателям"
   ON public.disputes FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
-    buyer_id = auth.uid()
+    buyer_id = auth.uid() AND
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'buyer' AND is_blocked = false)
   );
 
 CREATE POLICY "Разрешить админам обновление споров"
