@@ -270,10 +270,25 @@ export function AuthProvider({ children }) {
       return { success: true };
     }
 
-    const redirectTo = `${window.location.origin}/login`;
+    const redirectTo = `${window.location.origin}/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
     return { success: true };
+  };
+
+  const updatePassword = async (newPassword) => {
+    if (!isSupabaseConfigured) {
+      const saved = JSON.parse(localStorage.getItem(DEMO_AUTH_KEY) ?? 'null');
+      if (saved && saved.profile) {
+        saved.profile.password = newPassword;
+        localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify(saved));
+      }
+      return { success: true };
+    }
+
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return { data, success: true };
   };
 
   const value = useMemo(() => ({
@@ -288,6 +303,7 @@ export function AuthProvider({ children }) {
     signUp,
     signOut,
     resetPasswordForEmail,
+    updatePassword,
     refreshProfile: () => loadProfile(session?.user?.id, session?.user?.email),
   }), [session, profile, loading, profileLoading, loadProfile, signUp]);
 

@@ -102,7 +102,27 @@ export function LoginPage() {
 
     try {
       await resetPasswordForEmail(resetEmail);
-      setResetSuccessMessage(t('resetEmailSentSuccess'));
+      if (isDemoMode) {
+        const emailToPass = resetEmail;
+        setResetSuccessMessage(
+          <div>
+            <p style={{ marginBottom: '12px' }}>{t('demoResetNotice')}</p>
+            <button
+              type="button"
+              className="primary"
+              style={{ width: '100%' }}
+              onClick={() => {
+                setShowResetModal(false);
+                navigate(`/reset-password?email=${encodeURIComponent(emailToPass)}`);
+              }}
+            >
+              {t('demoResetActionBtn')}
+            </button>
+          </div>
+        );
+      } else {
+        setResetSuccessMessage(t('resetEmailSentSuccess'));
+      }
       setResetEmail('');
     } catch (err) {
       setResetError(err.message ?? t('error'));

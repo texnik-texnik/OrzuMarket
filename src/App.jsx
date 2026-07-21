@@ -7,6 +7,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import { AppLayout } from './pages/common/AppLayout';
 import { HomePage } from './pages/common/HomePage';
 import { LoginPage } from './pages/common/LoginPage';
+import { ResetPasswordPage } from './pages/common/ResetPasswordPage';
 import { ShopPage } from './pages/common/ShopPage';
 import { SellerShopPage } from './pages/common/SellerShopPage';
 import { ProductDetailPage } from './pages/common/ProductDetailPage';
@@ -36,6 +37,7 @@ export default function App() {
                 <Route element={<AppLayout />}>
                   <Route index element={<HomePage />} />
                   <Route path="login" element={<LoginPage />} />
+                  <Route path="reset-password" element={<ResetPasswordPage />} />
                   <Route path="blocked" element={<BlockedPage />} />
 
                   {/* /admin/* — только admin */}
