@@ -233,32 +233,7 @@ export function LoginPage() {
         </label>
 
         <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span>{t('passwordLabel')}</span>
-            {!isRegister && (
-              <button
-                type="button"
-                className="button-link"
-                style={{
-                  fontSize: '13px',
-                  color: 'var(--primary)',
-                  fontWeight: '600',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  setResetEmail(email);
-                  setResetError('');
-                  setResetSuccessMessage('');
-                  setShowResetModal(true);
-                }}
-              >
-                {t('forgotPasswordLink')}
-              </button>
-            )}
-          </div>
+          {t('passwordLabel')}
           <input
             type="password"
             value={password}
