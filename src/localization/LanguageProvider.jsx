@@ -313,6 +313,9 @@ const translations = {
 
     // Reset Password
     forgotPasswordLink: 'Забыли пароль?',
+    forgotPasswordPrompt: 'Забыли пароль?',
+    forgotPasswordAction: 'Восстановить доступ',
+    invalidCredentialsError: 'Неверный email или пароль.',
     resetPasswordTitle: 'Восстановление пароля',
     resetPasswordSub: 'Введите ваш Email, и мы отправим ссылку для сброса пароля.',
     sendResetLinkBtn: 'Отправить ссылку',
@@ -629,6 +632,9 @@ const translations = {
 
     // Reset Password
     forgotPasswordLink: 'Паролро фаромӯш кардед?',
+    forgotPasswordPrompt: 'Паролро фаромӯш кардед?',
+    forgotPasswordAction: 'Барқарор кардани дастрасӣ',
+    invalidCredentialsError: 'Email ё парол нодуруст аст.',
     resetPasswordTitle: 'Барқароркунии парол',
     resetPasswordSub: 'Email-и худро ворид кунед ва мо истиноди барқароркуниро мефиристем.',
     sendResetLinkBtn: 'Фиристодани истинод',

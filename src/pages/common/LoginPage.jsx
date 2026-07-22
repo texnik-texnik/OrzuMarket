@@ -88,7 +88,12 @@ export function LoginPage() {
         navigate(target || defaultTarget, { replace: true });
       }
     } catch (err) {
-      setError(err.message ?? t('error'));
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('invalid login credentials')) {
+        setError(t('invalidCredentialsError'));
+      } else {
+        setError(msg || t('error'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -292,17 +297,15 @@ export function LoginPage() {
           <div className="error-container" style={{ marginBottom: '16px', padding: '12px 14px', background: 'var(--danger-light, rgba(239,68,68,0.1))', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--danger, #ef4444)' }}>
             <p className="error" style={{ margin: 0, fontWeight: '500' }}>{error}</p>
             {!isRegister && (
-              <div style={{ marginTop: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{t('forgotPasswordPrompt')}</span>
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(239,68,68,0.3)', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{t('forgotPasswordPrompt')}</span>
                 <button
                   type="button"
+                  className="primary"
                   style={{
-                    color: 'var(--primary)',
-                    fontWeight: '700',
-                    textDecoration: 'underline',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
+                    fontSize: '12px',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
                     cursor: 'pointer'
                   }}
                   onClick={() => {
@@ -312,7 +315,7 @@ export function LoginPage() {
                     setShowResetModal(true);
                   }}
                 >
-                  {t('forgotPasswordAction')}
+                  🔑 {t('forgotPasswordAction')}
                 </button>
               </div>
             )}
