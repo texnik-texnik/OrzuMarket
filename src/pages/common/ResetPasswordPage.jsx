@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthProvider';
 import { useTranslation } from '../../localization/LanguageProvider';
@@ -23,6 +23,20 @@ export function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('error')) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const errorDesc = params.get('error_description');
+      const errorCode = params.get('error_code');
+      if (errorCode === 'otp_expired' || errorDesc?.includes('expired') || errorDesc?.includes('invalid')) {
+        setError(t('otpExpiredError'));
+      } else if (errorDesc) {
+        setError(decodeURIComponent(errorDesc).replace(/\+/g, ' '));
+      }
+    }
+  }, [t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,9 +115,23 @@ export function ResetPasswordPage() {
             />
           </label>
 
-          {error && <p className="error">{error}</p>}
+          {error && (
+            <div className="error-container" style={{ marginBottom: '16px', padding: '12px 14px', background: 'var(--danger-light, rgba(239,68,68,0.1))', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--danger, #ef4444)' }}>
+              <p className="error" style={{ margin: 0, fontWeight: '500' }}>{error}</p>
+              {error === t('otpExpiredError') && (
+                <button
+                  type="button"
+                  className="primary"
+                  style={{ marginTop: '12px', width: '100%', fontSize: '13px' }}
+                  onClick={() => navigate('/login', { replace: true })}
+                >
+                  {t('requestNewLinkBtn')}
+                </button>
+              )}
+            </div>
+          )}
 
-          <button type="submit" disabled={submitting}>
+          <button type="submit" disabled={submitting || error === t('otpExpiredError')}>
             {submitting ? t('savingNewPassword') : t('saveNewPasswordBtn')}
           </button>
         </form>
