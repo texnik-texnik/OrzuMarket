@@ -228,13 +228,21 @@ export function LoginPage() {
         </label>
 
         <label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
             <span>{t('passwordLabel')}</span>
             {!isRegister && (
               <button
                 type="button"
                 className="button-link"
-                style={{ fontSize: '12px', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--primary)',
+                  fontWeight: '600',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer'
+                }}
                 onClick={() => {
                   setResetEmail(email);
                   setResetError('');
@@ -280,7 +288,36 @@ export function LoginPage() {
           </div>
         )}
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <div className="error-container" style={{ marginBottom: '16px', padding: '12px 14px', background: 'var(--danger-light, rgba(239,68,68,0.1))', borderRadius: 'var(--radius-md, 8px)', border: '1px solid var(--danger, #ef4444)' }}>
+            <p className="error" style={{ margin: 0, fontWeight: '500' }}>{error}</p>
+            {!isRegister && (
+              <div style={{ marginTop: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>{t('forgotPasswordPrompt')}</span>
+                <button
+                  type="button"
+                  style={{
+                    color: 'var(--primary)',
+                    fontWeight: '700',
+                    textDecoration: 'underline',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    setResetEmail(email);
+                    setResetError('');
+                    setResetSuccessMessage('');
+                    setShowResetModal(true);
+                  }}
+                >
+                  {t('forgotPasswordAction')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <button type="submit" disabled={submitting}>
           {submitting ? (isRegister ? t('registering') : t('loggingIn')) : (isRegister ? t('registerBtn') : t('loginBtn'))}
