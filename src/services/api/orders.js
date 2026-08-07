@@ -78,6 +78,21 @@ export async function createOrdersFromCart({ buyerId, items }) {
     }
   }
 
+  // Сначала пробуем выполнить атомарную транзакцию через RPC (PostgreSQL function)
+  try {
+    const rpcItems = items.map((item) => ({ id: item.id, quantity: item.quantity }));
+    const { data: rpcData, error: rpcError } = await supabase.rpc('process_checkout', {
+      p_buyer_id: buyerId,
+      p_items: rpcItems,
+    });
+
+    if (!rpcError && rpcData) {
+      return rpcData;
+    }
+  } catch (rpcErr) {
+    console.warn('RPC process_checkout unavailable, falling back to manual insert:', rpcErr);
+  }
+
   const rows = items.map((item) => {
     const dbProduct = dbProducts.find((p) => p.id === item.id);
     return {

@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   is_active BOOLEAN DEFAULT true,
   photo_url TEXT,
   category VARCHAR(100) DEFAULT 'other',
+  moderation_status VARCHAR(50) DEFAULT 'approved' CHECK (moderation_status IN ('pending', 'approved', 'rejected')),
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 

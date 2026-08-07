@@ -226,7 +226,7 @@ export async function createSellerProduct({ sellerId, name, price, description, 
     return data;
   } catch (error) {
     if (error.message && error.message.toLowerCase().includes('row-level security')) {
-      throw new Error('Ошибка прав доступа (RLS): Пожалуйста, отключите RLS для таблицы "products" в Supabase Console или добавьте политику разрешения вставки (INSERT) для продавцов.');
+      throw new Error('Ошибка прав доступа (RLS): Убедитесь, что в Supabase Console добавлена политика разрешения вставки (INSERT) для продавцов.');
     }
 
     const { data, error: retryError } = await supabase
