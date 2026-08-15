@@ -243,8 +243,12 @@ export function ProfilePage() {
         {!isEditing ? (
           <>
             <dl className="profile-list">
-              <dt>{t('userIdLabel')}</dt>
-              <dd>{user?.id}</dd>
+              {profile?.role === 'admin' && (
+                <>
+                  <dt>{t('userIdLabel')}</dt>
+                  <dd>{user?.id}</dd>
+                </>
+              )}
               <dt>{t('emailLabelDl')}</dt>
               <dd>{profile?.email ?? user?.email}</dd>
               <dt>{t('fullNameLabelDl')}</dt>
@@ -267,8 +271,12 @@ export function ProfilePage() {
         ) : (
           <form onSubmit={handleSave}>
             <dl className="profile-list">
-              <dt>{t('userIdLabel')}</dt>
-              <dd>{user?.id}</dd>
+              {profile?.role === 'admin' && (
+                <>
+                  <dt>{t('userIdLabel')}</dt>
+                  <dd>{user?.id}</dd>
+                </>
+              )}
               <dt>{t('emailLabelDl')}</dt>
               <dd>{profile?.email ?? user?.email}</dd>
               
