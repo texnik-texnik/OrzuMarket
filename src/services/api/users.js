@@ -156,7 +156,7 @@ export async function uploadAvatarPhoto({ userId, photoFile }) {
     .from(bucketName)
     .getPublicUrl(bucketName === 'product-photos' ? `avatars/${filePath}` : filePath);
 
-  return data.publicUrl;
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
 export async function updateUserProfile({ userId, fullName, phone, photoFile }) {
@@ -195,16 +195,9 @@ export async function updateUserProfile({ userId, fullName, phone, photoFile }) 
 
   if (error) {
     if (error.message && (error.message.includes('avatar_url') || error.code === '42703')) {
-      console.warn('Column "avatar_url" does not exist in profiles table. Retrying update without it.');
-      const { data: retryData, error: retryError } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName, phone })
-        .eq('id', userId)
-        .select('id, email, full_name, role, phone, is_blocked')
-        .maybeSingle();
-
-      if (retryError) throw retryError;
-      return retryData;
+      throw new Error(
+        'В вашей таблице "profiles" в Supabase отсутствует колонка "avatar_url". Пожалуйста, выполните в Supabase SQL Editor команду: ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;'
+      );
     }
     throw error;
   }
