@@ -298,7 +298,7 @@ export function ProfilePage() {
                 </div>
               </dd>
 
-              <dt>{t('fieldPhoto') || 'Фото профиля'}</dt>
+              <dt>{t('fieldAvatar') || 'Аватар профиля'}</dt>
               <dd>
                 <input
                   type="file"

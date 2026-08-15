@@ -333,3 +333,42 @@ CREATE POLICY "Разрешить админам обновление споро
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 5. НАСТРОЙКА ХРАНИЛИЩА ФАЙЛОВ И АВАТАРОВ (SUPABASE STORAGE & RLS)
+-- ---------------------------------------------------------------------
+-- Создание бакетов для аватаров и изображений товаров (публичные)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('product-photos', 'product-photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Политика: Публичное чтение изображений
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public Read Storage Objects') THEN
+    CREATE POLICY "Public Read Storage Objects" ON storage.objects 
+      FOR SELECT USING (bucket_id IN ('product-photos', 'avatars'));
+  END IF;
+
+  -- Политика: Разрешить всем авторизованным пользователям загрузку файлов
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated User Upload Objects') THEN
+    CREATE POLICY "Authenticated User Upload Objects" ON storage.objects 
+      FOR INSERT WITH CHECK (
+        auth.role() = 'authenticated' AND 
+        bucket_id IN ('product-photos', 'avatars')
+      );
+  END IF;
+
+  -- Политика: Разрешить пользователям обновление и перезапись файлов
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated User Update Objects') THEN
+    CREATE POLICY "Authenticated User Update Objects" ON storage.objects 
+      FOR UPDATE USING (
+        auth.role() = 'authenticated' AND 
+        bucket_id IN ('product-photos', 'avatars')
+      );
+  END IF;
+END $$;
+

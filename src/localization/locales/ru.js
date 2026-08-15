@@ -229,6 +229,7 @@ export const ru = {
   fieldDescription: 'Описание',
   fieldCategory: 'Категория',
   fieldPhoto: 'Фото товара',
+  fieldAvatar: 'Аватар профиля',
   photoPreviewLabel: 'Предпросмотр',
   photoPreviewAlt: 'Предпросмотр товара',
   createBtn: 'Создать',

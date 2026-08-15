@@ -113,10 +113,12 @@ export async function uploadAvatarPhoto({ userId, photoFile }) {
   if (!isSupabaseConfigured) return fileToDataUrl(photoFile);
 
   const extension = getFileExtension(photoFile);
-  const filePath = `avatars/${userId}.${extension}`;
+  const filePath = `${userId}.${extension}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from('product-photos')
+  // Пробуем сначала бакет 'avatars', а при отсутствии — 'product-photos'
+  let bucketName = 'avatars';
+  let { error: uploadError } = await supabase.storage
+    .from(bucketName)
     .upload(filePath, photoFile, {
       cacheControl: '3600',
       upsert: true,
@@ -124,12 +126,35 @@ export async function uploadAvatarPhoto({ userId, photoFile }) {
     });
 
   if (uploadError) {
-    throw new Error('Не удалось загрузить аватар: ' + uploadError.message);
+    bucketName = 'product-photos';
+    const fallbackResult = await supabase.storage
+      .from(bucketName)
+      .upload(`avatars/${filePath}`, photoFile, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: photoFile.type || 'image/jpeg',
+      });
+    
+    if (fallbackResult.error) {
+      uploadError = fallbackResult.error;
+    } else {
+      uploadError = null;
+    }
+  }
+
+  if (uploadError) {
+    const msg = uploadError.message || '';
+    if (msg.toLowerCase().includes('row-level security') || msg.toLowerCase().includes('violates row-level security')) {
+      throw new Error(
+        'Ошибка прав доступа Supabase Storage (RLS): Пожалуйста, выполните SQL-команду создания политик для Storage из файла supabase_setup.sql в Supabase SQL Editor.'
+      );
+    }
+    throw new Error('Не удалось загрузить аватар: ' + msg);
   }
 
   const { data } = supabase.storage
-    .from('product-photos')
-    .getPublicUrl(filePath);
+    .from(bucketName)
+    .getPublicUrl(bucketName === 'product-photos' ? `avatars/${filePath}` : filePath);
 
   return data.publicUrl;
 }

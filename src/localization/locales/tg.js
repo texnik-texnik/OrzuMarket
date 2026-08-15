@@ -229,6 +229,7 @@ export const tg = {
   fieldDescription: 'Тавсиф',
   fieldCategory: 'Категория',
   fieldPhoto: 'Сурати мол',
+  fieldAvatar: 'Сурати профил',
   photoPreviewLabel: 'Пешнамоиш',
   photoPreviewAlt: 'Пешнамоиши мол',
   createBtn: 'Эҷод кардан',
