@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { ru } from './locales/ru';
 import { tg } from './locales/tg';
 
@@ -11,32 +11,37 @@ export function LanguageProvider({ children }) {
     return localStorage.getItem('orzu_lang') || 'ru';
   });
 
-  const setLang = (newLang) => {
+  const setLang = useCallback((newLang) => {
     if (newLang === 'ru' || newLang === 'tg') {
       setLangState(newLang);
       localStorage.setItem('orzu_lang', newLang);
     }
-  };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  const t = (key, replacements = {}) => {
+  const t = useCallback((key, replacements = {}) => {
     const translationSet = translations[lang] || translations['ru'];
     let text = translationSet[key] || translations['ru'][key] || key;
     
     // Replace placeholders like {name} safely
-    Object.keys(replacements).forEach((k) => {
-      const escapedKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      text = text.replace(new RegExp(`{${escapedKey}}`, 'g'), replacements[k]);
-    });
+    const keys = Object.keys(replacements);
+    if (keys.length > 0) {
+      keys.forEach((k) => {
+        const escapedKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        text = text.replace(new RegExp(`{${escapedKey}}`, 'g'), replacements[k]);
+      });
+    }
     
     return text;
-  };
+  }, [lang]);
+
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

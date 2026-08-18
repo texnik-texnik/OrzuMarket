@@ -7,7 +7,7 @@ import { InteractiveChart } from '../../components/InteractiveChart';
 import { StatusBadge } from '../../components/StatusBadge';
 
 export function SellerOverviewPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, isDemoMode } = useAuth();
   const { t, lang } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
