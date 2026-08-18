@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
+import { fetchWithCache, invalidateCache } from '../../lib/cache';
 import {
   DEMO_USERS_KEY,
   DEMO_PRODUCTS_KEY,
@@ -61,6 +62,10 @@ function getFileExtension(file) {
 }
 
 export async function fetchAdminUsers() {
+  return fetchWithCache('admin_users', () => uncachedFetchAdminUsers());
+}
+
+async function uncachedFetchAdminUsers() {
   if (!isSupabaseConfigured) return readJson(DEMO_USERS_KEY, seedUsers);
 
   const { data, error } = await supabase
@@ -73,6 +78,8 @@ export async function fetchAdminUsers() {
 }
 
 export async function updateUserRole(userId, role) {
+  invalidateCache('admin_users');
+  invalidateCache('profile');
   if (!isSupabaseConfigured) {
     const users = readJson(DEMO_USERS_KEY, seedUsers);
     writeJson(DEMO_USERS_KEY, users.map((user) => user.id === userId ? { ...user, role } : user));
@@ -91,6 +98,8 @@ export async function updateUserRole(userId, role) {
 }
 
 export async function updateUserBlocked(userId, isBlocked) {
+  invalidateCache('admin_users');
+  invalidateCache('profile');
   if (!isSupabaseConfigured) {
     const users = readJson(DEMO_USERS_KEY, seedUsers);
     writeJson(DEMO_USERS_KEY, users.map((user) => user.id === userId ? { ...user, is_blocked: isBlocked } : user));
@@ -160,6 +169,8 @@ export async function uploadAvatarPhoto({ userId, photoFile }) {
 }
 
 export async function updateUserProfile({ userId, fullName, phone, photoFile }) {
+  invalidateCache('profile');
+  invalidateCache('admin_users');
   let avatarUrl = '';
   if (photoFile) {
     avatarUrl = await uploadAvatarPhoto({ userId, photoFile });

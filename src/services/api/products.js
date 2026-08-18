@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
+import { fetchWithCache, invalidateCache } from '../../lib/cache';
 import {
   DEMO_PRODUCTS_KEY,
   DEMO_USERS_KEY,
@@ -63,7 +64,12 @@ function sortDemoProducts(products, sort) {
   });
 }
 
-export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice = '', sort = 'created_at.desc', category = '' } = {}) {
+export async function fetchActiveProducts(params = {}) {
+  const cacheKey = `products_active_${JSON.stringify(params)}`;
+  return fetchWithCache(cacheKey, () => uncachedFetchActiveProducts(params));
+}
+
+async function uncachedFetchActiveProducts({ search = '', minPrice = '', maxPrice = '', sort = 'created_at.desc', category = '' } = {}) {
   if (!isSupabaseConfigured) {
     let products = readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.is_active && (product.moderation_status === 'approved' || !product.moderation_status));
     if (search.trim()) products = products.filter((product) => product.name.toLowerCase().includes(search.trim().toLowerCase()));
@@ -125,6 +131,10 @@ export async function fetchActiveProducts({ search = '', minPrice = '', maxPrice
 }
 
 export async function fetchProductById(productId) {
+  return fetchWithCache(`product_${productId}`, () => uncachedFetchProductById(productId));
+}
+
+async function uncachedFetchProductById(productId) {
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
     const product = products.find((p) => p.id === productId);
@@ -152,6 +162,10 @@ export async function fetchProductById(productId) {
 }
 
 export async function fetchSellerProducts(sellerId) {
+  return fetchWithCache(`products_seller_${sellerId}`, () => uncachedFetchSellerProducts(sellerId));
+}
+
+async function uncachedFetchSellerProducts(sellerId) {
   if (!isSupabaseConfigured) {
     return readJson(DEMO_PRODUCTS_KEY, seedProducts).filter((product) => product.seller_id === sellerId || sellerId === 'demo-seller');
   }
@@ -179,6 +193,7 @@ export async function fetchSellerProducts(sellerId) {
 }
 
 export async function createSellerProduct({ sellerId, name, price, description, photoFile, stock, category }) {
+  invalidateCache('product');
   let photoUrl = '';
   try {
     photoUrl = await uploadProductPhoto({ sellerId, photoFile });
@@ -311,6 +326,10 @@ export async function deleteSellerProduct(productId) {
 }
 
 export async function fetchAdminProducts() {
+  return fetchWithCache('products_admin', () => uncachedFetchAdminProducts());
+}
+
+async function uncachedFetchAdminProducts() {
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
     const users = readJson(DEMO_USERS_KEY, seedUsers);
@@ -347,6 +366,7 @@ export async function fetchAdminProducts() {
 }
 
 export async function updateProductVisibility({ productId, is_active }) {
+  invalidateCache('product');
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts).map((product) =>
       product.id === productId ? { ...product, is_active } : product
@@ -367,6 +387,7 @@ export async function updateProductVisibility({ productId, is_active }) {
 }
 
 export async function updateProductModerationStatus({ productId, moderation_status }) {
+  invalidateCache('product');
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts).map((product) =>
       product.id === productId ? { ...product, moderation_status } : product

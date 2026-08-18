@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
+import { fetchWithCache, invalidateCache } from '../../lib/cache';
 import {
   DEMO_PRODUCTS_KEY,
   DEMO_ORDERS_KEY,
@@ -13,6 +14,7 @@ const DEMO_DISPUTES_KEY = 'orzu_demo_disputes_v1';
 const seedDisputes = [];
 
 export async function createDispute({ orderId, buyerId, reason, message }) {
+  invalidateCache('disputes');
   const newDispute = {
     id: isSupabaseConfigured ? undefined : crypto.randomUUID(),
     order_id: orderId,
@@ -40,6 +42,11 @@ export async function createDispute({ orderId, buyerId, reason, message }) {
 }
 
 export async function fetchDisputes(filters = {}) {
+  const cacheKey = `disputes_${JSON.stringify(filters)}`;
+  return fetchWithCache(cacheKey, () => uncachedFetchDisputes(filters));
+}
+
+async function uncachedFetchDisputes(filters = {}) {
   if (!isSupabaseConfigured) {
     let disputes = readJson(DEMO_DISPUTES_KEY, seedDisputes);
     const orders = readJson(DEMO_ORDERS_KEY, []);
@@ -98,6 +105,8 @@ export async function fetchDisputes(filters = {}) {
 }
 
 export async function resolveDispute(disputeId, resolutionStatus, orderId) {
+  invalidateCache('disputes');
+  invalidateCache('orders');
   if (!isSupabaseConfigured) {
     const disputes = readJson(DEMO_DISPUTES_KEY, seedDisputes);
     const updatedDisputes = disputes.map((d) => d.id === disputeId ? { ...d, status: resolutionStatus } : d);

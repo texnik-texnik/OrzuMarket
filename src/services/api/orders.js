@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
+import { fetchWithCache, invalidateCache } from '../../lib/cache';
 import {
   DEMO_ORDERS_KEY,
   DEMO_PRODUCTS_KEY,
@@ -17,6 +18,8 @@ export const orderStatusLabels = {
 };
 
 export async function createOrdersFromCart({ buyerId, items }) {
+  invalidateCache('orders');
+  invalidateCache('product');
   if (!isSupabaseConfigured) {
     const products = readJson(DEMO_PRODUCTS_KEY, seedProducts);
     const orders = readJson(DEMO_ORDERS_KEY, []);
@@ -132,6 +135,10 @@ export async function createOrdersFromCart({ buyerId, items }) {
 }
 
 export async function fetchMyOrders() {
+  return fetchWithCache('orders_my', () => uncachedFetchMyOrders());
+}
+
+async function uncachedFetchMyOrders() {
   if (!isSupabaseConfigured) return readJson(DEMO_ORDERS_KEY, []);
 
   const { data, error } = await supabase
@@ -147,6 +154,10 @@ export async function fetchMyOrders() {
 }
 
 export async function fetchSellerOrders() {
+  return fetchWithCache('orders_seller', () => uncachedFetchSellerOrders());
+}
+
+async function uncachedFetchSellerOrders() {
   if (!isSupabaseConfigured) return readJson(DEMO_ORDERS_KEY, []);
 
   const { data, error } = await supabase
@@ -163,10 +174,12 @@ export async function fetchSellerOrders() {
 }
 
 export async function updateOrderStatus(orderId, status) {
+  invalidateCache('orders');
   if (!isSupabaseConfigured) {
     const orders = readJson(DEMO_ORDERS_KEY, []);
-    writeJson(DEMO_ORDERS_KEY, orders.map((order) => order.id === orderId ? { ...order, status } : order));
-    return { id: orderId, status };
+    const updated = orders.map((o) => (o.id === orderId ? { ...o, status } : o));
+    writeJson(DEMO_ORDERS_KEY, updated);
+    return updated.find((o) => o.id === orderId);
   }
 
   const { data, error } = await supabase
